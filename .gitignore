@@ -7,3 +7,5 @@ out
 .DS_Store
 tests/e2e/shots
 tsconfig.tsbuildinfo
+.vercel
+.env*
