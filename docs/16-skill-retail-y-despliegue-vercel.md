@@ -33,8 +33,13 @@ La skill fue generada en:
 - Se creó y vinculó el proyecto `sistema-ventas-retail` en Vercel CLI (versión 65.12.1).
 - Se configuraron como secrets de Vercel las variables de entorno `DATABASE_URL`, `DATABASE_SSL`, `SESSION_IDLE_HOURS`, `SESSION_MAX_DAYS`, `PAYMENTS_PROVIDER`, `INVOICING_PROVIDER` y `MESSAGING_PROVIDER`.
 - Se ejecutó el despliegue inicial y se generó el alias de producción:
-  - **URL:** `https://sistema-ventas-retail.vercel.app`
-  - **Inspector:** `https://vercel.com/joseom07-3483s-projects/sistema-ventas-retail/GaDCE5Zifxm2sE8b1AFeT21u9wqr`
+  - **URL Canónica:** `https://sistema-ventas-retail-exkalibur.vercel.app`
+  - **URL de Equipo:** `https://sistema-ventas-retail-joseom07-3483s-projects.vercel.app`
+  - **Inspector:** `https://vercel.com/joseom07-3483s-projects/sistema-ventas-retail`
+
+> [!NOTE]
+> **Resolución de Error 404 (NOT_FOUND):**
+> El subdominio genérico `sistema-ventas-retail.vercel.app` pertenecía a un registro previo en otra cuenta de Vercel. Se aprovisionó el dominio canónico `sistema-ventas-retail-exkalibur.vercel.app`, se configuró explícitamente `framework: "nextjs"` y se removió la restricción de SSO por defecto (`ssoProtection: null`), logrando que la aplicación sirva `/login` inmediatamente.
 
 ---
 

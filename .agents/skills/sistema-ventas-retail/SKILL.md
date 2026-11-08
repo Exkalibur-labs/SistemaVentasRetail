@@ -66,7 +66,8 @@ Tenant (Cuenta SaaS)
 ### Proyecto en Vercel
 * **Proyecto:** `sistema-ventas-retail`
 * **Scope / Equipo:** `joseom07-3483s-projects`
-* **URL de Producción:** `https://sistema-ventas-retail.vercel.app`
+* **URL de Producción (Canónica):** `https://sistema-ventas-retail-exkalibur.vercel.app`
+* **URL de Equipo:** `https://sistema-ventas-retail-joseom07-3483s-projects.vercel.app`
 * **URL de Inspección:** `https://vercel.com/joseom07-3483s-projects/sistema-ventas-retail`
 * **Autenticación CLI:** Administrado mediante variable de entorno `VERCEL_TOKEN` (definida en el workspace corporativo).
 
