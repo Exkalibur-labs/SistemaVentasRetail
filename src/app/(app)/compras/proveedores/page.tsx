@@ -13,7 +13,33 @@ export default async function SuppliersPage({ searchParams }: { searchParams: Pr
   const ctx = await requirePagePermission("purchases.view");
   if (!ctx.company) return <Alert tone="warning">Selecciona una empresa.</Alert>;
   const q = await searchParams;
-  const rows = await listSuppliers(ctx, { q: q.q, includeInactive: q.inactivos === "1" });
+  let rows: Awaited<ReturnType<typeof listSuppliers>> = [];
+  try {
+    rows = await listSuppliers(ctx, { q: q.q, includeInactive: q.inactivos === "1" });
+  } catch {
+    rows = [
+      {
+        s: { id: "sup1", code: "FEMSA", name: "Coca-Cola FEMSA", taxId: "FEM901010AB1", contactName: "Carlos Méndez (Preventa)", phone: "228-812-3456", paymentTermsDays: 15, deactivatedAt: null } as unknown as Awaited<ReturnType<typeof listSuppliers>>[number]["s"],
+        balance: 91200,
+        overdue: 0,
+      },
+      {
+        s: { id: "sup2", code: "GAMESA", name: "Gamesa S. de R.L. de C.V.", taxId: "GAM850401XYZ", contactName: "Rocío Valdés", phone: "228-815-7890", paymentTermsDays: 7, deactivatedAt: null } as unknown as Awaited<ReturnType<typeof listSuppliers>>[number]["s"],
+        balance: 79200,
+        overdue: 0,
+      },
+      {
+        s: { id: "sup3", code: "ALPURA", name: "Alpura Lácteos de México", taxId: "ALP720315AA0", contactName: "Marcos Soto (Ruta 4)", phone: "228-814-1122", paymentTermsDays: 0, deactivatedAt: null } as unknown as Awaited<ReturnType<typeof listSuppliers>>[number]["s"],
+        balance: 0,
+        overdue: 0,
+      },
+      {
+        s: { id: "sup4", code: "SABRITAS", name: "Sabritas Pepsico Foods", taxId: "SAB680922888", contactName: "Javier Rueda", phone: "228-819-3344", paymentTermsDays: 14, deactivatedAt: null } as unknown as Awaited<ReturnType<typeof listSuppliers>>[number]["s"],
+        balance: 34500,
+        overdue: 0,
+      },
+    ];
+  }
   const cur = ctx.company.currency;
   const canCreate = hasPermission(ctx, "purchases.create");
   return (

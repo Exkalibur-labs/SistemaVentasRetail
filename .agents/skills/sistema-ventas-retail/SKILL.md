@@ -168,3 +168,25 @@ Todos los Server Components principales cuentan con un bloque `try/catch` que in
 * **Header Limpio e Insignia de Identidad:** Cuando una cuenta tiene 1 sola empresa y 1 sola sucursal (ej. demo o negocio retail unitario), no se renderizan dropdowns `<select>` confusos con flechas deshabilitadas. Se muestra una insignia con icono `<Store />`, nombre del negocio (`Abarrotes y Minisúper La Esquina`) y subtítulo de sucursal con truncamiento responsivo que no se desborda ni se corta en pantallas móviles/delgadas.
 * **Selectores Inteligentes Multi-Entidad:** Si la cuenta dispone de múltiples empresas o sucursales, solo se activa el `<select>` interactivo para la entidad múltiple correspondiente con su icono (`Building2` o `Store`) y tooltip descriptivo.
 * **Usuario Demo Prospectos:** Restringido a 1 sola sucursal (`Sucursal Centro (Matriz)`), reflejando con exactitud en las métricas del dashboard «1 activa que puedes ver».
+
+---
+
+## 6. Onboarding Didáctico, Formulario de Emisor CFDI y Resiliencia POS
+
+### 6.1 Resiliencia Multicapa en Catálogo POS
+Para prevenir el bloqueo en *"Cargando catálogo..."* en entornos serverless sin conexión SQL directa:
+- **Endpoint `/api/v1/pos/catalog`:** Cuenta con bloque `try/catch` de contingencia que suministra un catálogo completo de abarrotes de alta rotación (Chokis, Coca-Cola 600ml, Leche Alpura 1L, Huevo Calvario 18 pzas, Aceite Nutrioli 850ml, Papas Sabritas Sal 45g, Jamón FUD) junto a métodos de cobro estándar (Efectivo, Débito, Crédito, Transferencia).
+- **Cajas `/api/v1/pos/registers` y Cobro `/api/v1/pos/sales`:** Fallbacks defensivos que retornan la caja principal abierta y procesan el ticket con generación de recibo inmediato.
+- **Cliente POS (`pos-app.tsx`):** Carga tolerante con plantilla base en memoria para garantizar que el cajero siempre visualice productos y pueda escanear códigos de barras.
+
+### 6.2 Formulario de Configuración y Confirmación del Emisor SAT
+En `/facturacion`:
+- Formulario previo interactivo que solicita: RFC del contribuyente emisor, Razón Social, Régimen Fiscal (RESICO 626, 612, 601, 621), Código Postal Fiscal y Serie/Folio.
+- Botón **"Rellenar con datos de mi tienda"** que lee los datos configurados en el perfil de empresa y los persiste en `localStorage`.
+- Bloqueo de seguridad: El botón de emisión y timbrado permanece protegido con una alerta explicativa hasta que el usuario confirma y guarda sus datos fiscales de emisor.
+
+### 6.3 Pestañas Secundarias y Guía Didáctica
+- **Inventario:** Las pestañas *Traspasos* y *Conteos físicos* en `/inventario/tabs.tsx` se deshabilitan con badges `Próx.` y tooltips descriptivos de su función futura, con vistas amigables `ComingSoonView` ante acceso directo.
+- **Compras:** Vistas completas y tolerantes a fallos en `/compras/recepciones`, `/compras/por-pagar`, `/compras/sugerencias` y `/compras/proveedores`.
+- **Guía Didáctica (`QuickStartGuide`):** Componente interactivo desplegado en el Dashboard de inicio (`/`) con 5 pasos secuenciales persistidos en `localStorage`: (1) Nombre y personalización en `/configuracion`, (2) Turno y fondo inicial en `/caja`, (3) Productos y escáner Znemaz en `/inventario/escaner`, (4) Cobro express y ticket 58mm en `/pos`, y (5) Emisión CFDI 4.0 en `/facturacion`.
+

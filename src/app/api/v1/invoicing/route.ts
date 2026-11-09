@@ -31,6 +31,7 @@ export const POST = withApi(async (req, ctx) => {
     const inv = await issueInvoiceFromSale(ctx, {
       saleId: body.saleId,
       receiver: body.receiver,
+      issuer: body.issuer,
     });
     return { ok: true, invoice: inv };
   }

@@ -10,6 +10,7 @@ import { AREA_LABELS } from "@/server/authz/permissions";
 import { formatDateTime } from "@/lib/format";
 import { formatCents } from "@/lib/money";
 import { getSummary, reportFilter } from "@/server/modules/reports/service";
+import { QuickStartGuide } from "@/components/quick-start-guide";
 import { Kpi } from "./reportes/kpi";
 
 export default async function HomePage() {
@@ -80,6 +81,8 @@ export default async function HomePage() {
         title={`Hola, ${ctx.user.fullName.split(" ")[0]}`}
         description={ctx.company ? `${ctx.company.tradeName}${ctx.branch ? ` · ${ctx.branch.name}` : ""}` : "Plataforma"}
       />
+
+      <QuickStartGuide />
 
       {!ctx.company && !ctx.isSuperadmin && (
         <Alert tone="warning" title="No tienes una empresa asignada">
