@@ -2,16 +2,18 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, CloudOff, HandCoins, Pause, Printer, RefreshCw, Search, Star, Tag, Undo2, User, Wifi, X } from "lucide-react";
+import { ArrowLeft, ArrowUpDown, CloudOff, HandCoins, Pause, Printer, RefreshCw, Search, Star, Tag, Undo2, User, Wifi, X } from "lucide-react";
 import { computeTotals, formatCents, normalizeQty } from "@/lib/money";
 import { evaluatePromotions, listPrice, type PromoResult } from "@/lib/promotions";
 import { localDb, nextClientSequence, uuidv7, type HeldCart, type RecentSale } from "@/lib/pos/local-db";
 import { CLIENT_HEADERS, outboxCounts, syncOutbox } from "@/lib/pos/sync";
 import { AbonoTicket, ReturnTicket, Ticket, type AbonoTicketData, type ReturnTicketData, type TicketData } from "@/components/pos/ticket";
+import { useBarcodeScanner, playScannerBeep } from "@/lib/hardware/use-barcode-scanner";
 import type { PosCatalog, PosItem } from "@/server/modules/pos/catalog";
 import { CartView, DiscountModal, groupProducts, lineAmounts, Modal, norm, PaymentModal, ProductGrid, VariantModal, type CartLine, type ProductTile, type Tender } from "./pos-parts";
 import { AbonoModal, CustomerModal, type PosCustomer } from "./pos-customer";
 import { ReturnModal } from "./pos-return";
+import { PosCashMovementModal } from "./pos-cash-movement";
 
 export type PosRegister = { id: string; code: string; name: string; session: { id: string; openedAt: string; openedByName: string | null } | null };
 
@@ -56,6 +58,7 @@ export function PosApp({ initial }: { initial: PosInitial }) {
   const [customerModal, setCustomerModal] = useState(false);
   const [abonoOpen, setAbonoOpen] = useState(false);
   const [abonoTicket, setAbonoTicket] = useState<AbonoTicketData | null>(null);
+  const [cashMovementOpen, setCashMovementOpen] = useState(false);
   const [forceAuth, setForceAuth] = useState(false);
   const [returnOpen, setReturnOpen] = useState(false);
   const [returnTicket, setReturnTicket] = useState<ReturnTicketData | null>(null);
@@ -258,6 +261,25 @@ export function PosApp({ initial }: { initial: PosInitial }) {
     if (tiles.length === 1) return pickTile(tiles[0]);
     if (tiles.length === 0) notify({ tone: "danger", text: `No se encontró «${q}».` });
   };
+
+  // Intercepta lecturas de la pistola inalámbrica Znemaz 1D/2D en modo teclado HID
+  useBarcodeScanner({
+    onScan: (scannedCode) => {
+      const q = scannedCode.trim();
+      if (!q) return;
+      const lower = q.toLowerCase();
+      const exact = items.find((it) => it.barcodes.includes(q) || it.sku.toLowerCase() === lower);
+      if (exact) {
+        addItem(exact);
+        setQuery("");
+        notify({ tone: "success", text: `Escaneado: ${exact.name}` });
+      } else {
+        playScannerBeep(false);
+        notify({ tone: "danger", text: `Código no registrado: ${q}` });
+      }
+    },
+    enabled: !paying && !variantTile && !customerModal && !abonoOpen && !returnOpen && !cashMovementOpen,
+  });
 
   const setQty = (i: number, q: number) => {
     setCart((c) => {
@@ -529,6 +551,15 @@ export function PosApp({ initial }: { initial: PosInitial }) {
             <HandCoins className="size-3.5" /> Abono
           </button>
         )}
+        <button
+          onClick={() => setCashMovementOpen(true)}
+          disabled={!online || !sessionOpen}
+          title={!sessionOpen ? "Abre la caja" : "Registrar entrada o salida de efectivo"}
+          className="flex items-center gap-1 rounded-full bg-surface-2 px-2.5 py-1 text-xs font-medium text-muted hover:text-text disabled:opacity-40"
+          data-testid="cash-movement-button"
+        >
+          <ArrowUpDown className="size-3.5" /> Entrada/Salida
+        </button>
         <button onClick={() => setPanel("held")} className="flex items-center gap-1 rounded-full bg-surface-2 px-2.5 py-1 text-xs font-medium text-muted">
           <Pause className="size-3.5" /> En espera ({held.length})
         </button>
@@ -871,6 +902,14 @@ export function PosApp({ initial }: { initial: PosInitial }) {
             <button className="rounded-xl bg-primary py-3 font-semibold text-primary-fg" onClick={() => { setAbonoTicket(null); focusSearch(); }} autoFocus>Listo</button>
           </div>
         </Modal>
+      )}
+      {cashMovementOpen && register?.session && (
+        <PosCashMovementModal
+          sessionId={register.session.id}
+          currency={cur}
+          onClose={() => { setCashMovementOpen(false); focusSearch(); }}
+          onSuccess={(txt) => notify({ tone: "success", text: txt })}
+        />
       )}
       {toast && (
         <div className={`fixed bottom-4 left-1/2 z-[60] -translate-x-1/2 rounded-xl px-4 py-3 text-sm font-medium shadow-lg ${{ info: "bg-text text-bg", success: "bg-success text-white", warning: "bg-warning text-white", danger: "bg-danger text-white" }[toast.tone]}`} role="status">

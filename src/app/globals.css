@@ -129,7 +129,7 @@ a.link {
 }
 
 /* Ticket térmico de 80 mm */
-.ticket {
+.ticket, .ticket-80mm {
   width: 72mm;
   font-family: var(--font-mono);
   font-size: 12px;
@@ -137,10 +137,31 @@ a.link {
   color: #000;
   background: #fff;
 }
+
+/* Ticket térmico de 58 mm (SUZWIP Bluetooth/USB y portátiles) */
+.ticket-58mm {
+  width: 48mm;
+  max-width: 48mm;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.25;
+  color: #000;
+  background: #fff;
+  padding: 1.5mm !important;
+}
+
 @media print {
   @page ticket {
     size: 80mm auto;
-    margin: 4mm;
+    margin: 3mm;
+  }
+  @page ticket-58mm {
+    size: 58mm auto;
+    margin: 1mm;
+  }
+  .ticket-58mm {
+    page: ticket-58mm;
+    width: 48mm !important;
   }
 }
 

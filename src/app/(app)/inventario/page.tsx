@@ -34,7 +34,18 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
       <PageHeader
         title="Inventario"
         description="Existencias por almacén. Cada cambio queda en el kardex y no se puede borrar."
-        actions={hasPermission(ctx, "inventory.adjust") && <ButtonLink href={`/inventario/movimiento?alm=${wh.id}`}>Registrar movimiento</ButtonLink>}
+        actions={
+          <div className="flex items-center gap-2">
+            <ButtonLink href="/inventario/escaner">
+              ⚡ Escáner Znemaz
+            </ButtonLink>
+            {hasPermission(ctx, "inventory.adjust") && (
+              <ButtonLink href={`/inventario/movimiento?alm=${wh.id}`}>
+                Registrar movimiento
+              </ButtonLink>
+            )}
+          </div>
+        }
       />
       <InventarioTabs active="/inventario" />
       <Card className="mb-4">

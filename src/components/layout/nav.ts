@@ -14,6 +14,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Inicio", icon: "home" },
   { href: "/pos", label: "Punto de venta", icon: "cart", permission: "pos.sell", group: "operacion" },
   { href: "/ventas", label: "Ventas", icon: "receipt", permission: "pos.sell", group: "operacion" },
+  { href: "/facturacion", label: "Facturación", icon: "scroll", permission: "invoicing.view", group: "operacion" },
   { href: "/caja", label: "Caja", icon: "wallet", permission: "cash.open", group: "operacion" },
   { href: "/catalogo", label: "Catálogo", icon: "package", permission: "catalog.view", group: "operacion" },
   { href: "/inventario", label: "Inventario", icon: "boxes", permission: "inventory.view", group: "operacion" },

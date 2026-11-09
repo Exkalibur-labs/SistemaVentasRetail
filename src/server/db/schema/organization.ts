@@ -54,6 +54,22 @@ export type CompanySettings = {
   pos?: { requireCustomerForCredit?: boolean; allowSaleWithoutCustomer?: boolean };
   /** Política de devoluciones (4C). */
   returns?: { maxDays?: number; allowWithoutTicket?: boolean; cashRefundNeedsAuthorization?: boolean };
+  /** Tropicalización / Personalización de marca */
+  branding?: {
+    primaryColor?: string | null;
+    logoUrl?: string | null;
+    ticketHeader?: string | null;
+    ticketFooter?: string | null;
+    theme?: string | null;
+  };
+  /** Retrocompatibilidad y configuración de hardware (Znemaz 1D/2D, SUZWIP 58mm) */
+  hardware?: {
+    scannerMode?: string | null;
+    scannerBeep?: boolean;
+    printerWidth?: "58mm" | "80mm";
+    printerType?: string | null;
+    bluetoothPrinterName?: string | null;
+  };
 };
 
 export const companies = pgTable(

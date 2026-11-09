@@ -19,6 +19,20 @@ export async function updateSettingsAction(_p: ActionResult<unknown> | null, for
       pos: { allowSaleWithoutCustomer: checkbox(o.pos?.allowSaleWithoutCustomer), requireCustomerForCredit: checkbox(o.pos?.requireCustomerForCredit) },
       notifications: { lowStockEmail: o.notifications?.lowStockEmail ?? "" },
       returns: { maxDays: o.returns?.maxDays ?? 30, allowWithoutTicket: checkbox(o.returns?.allowWithoutTicket), cashRefundNeedsAuthorization: checkbox(o.returns?.cashRefundNeedsAuthorization) },
+      branding: {
+        primaryColor: o.branding?.primaryColor || null,
+        logoUrl: o.branding?.logoUrl || null,
+        ticketHeader: o.branding?.ticketHeader || null,
+        ticketFooter: o.branding?.ticketFooter || null,
+        theme: o.branding?.theme || null,
+      },
+      hardware: {
+        scannerMode: o.hardware?.scannerMode || "hid_burst",
+        scannerBeep: checkbox(o.hardware?.scannerBeep),
+        printerWidth: o.hardware?.printerWidth || "58mm",
+        printerType: o.hardware?.printerType || "bluetooth",
+        bluetoothPrinterName: o.hardware?.bluetoothPrinterName || null,
+      },
     });
     revalidatePath("/configuracion");
     return { ok: true, data: null };
