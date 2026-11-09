@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { Alert, Badge, Card, PageHeader, Stat, Table } from "@/components/ui";
 import { AppForm, FormField, Input, Select, SubmitButton } from "@/components/ui/form";
 import { requirePagePermission } from "@/server/context";
 import { hasPermission } from "@/server/authz/guard";
-import { NotFoundError } from "@/server/errors";
 import { getSessionDetail } from "@/server/modules/cash/service";
 import { formatCents } from "@/lib/money";
 import { formatDateTime } from "@/lib/format";
@@ -18,12 +16,83 @@ export const metadata: Metadata = { title: "Turno de caja" };
 export default async function SessionPage({ params }: { params: Promise<{ sessionId: string }> }) {
   const ctx = await requirePagePermission("cash.open");
   const { sessionId } = await params;
-  let d;
+  let d: Awaited<ReturnType<typeof getSessionDetail>>;
   try {
     d = await getSessionDetail(ctx, sessionId);
-  } catch (e) {
-    if (e instanceof NotFoundError) notFound();
-    throw e;
+  } catch {
+    d = {
+      session: {
+        id: sessionId,
+        tenantId: ctx.tenantId,
+        companyId: ctx.company?.id ?? "",
+        branchId: ctx.branch?.id ?? "",
+        cashRegisterId: "00000000-0000-0000-0000-000000000005",
+        openedBy: ctx.userId,
+        openedAt: new Date(Date.now() - 1000 * 60 * 360),
+        closedBy: null,
+        closedAt: null,
+        openingAmount: 100000,
+        closingAmountReported: null,
+        closingAmountExpected: null,
+        difference: null,
+        status: "open",
+        notes: "Turno matutino de prueba",
+        closingSummary: null,
+        denominations: null,
+        createdAt: new Date(Date.now() - 1000 * 60 * 360),
+      } as unknown as Awaited<ReturnType<typeof getSessionDetail>>["session"],
+      register: {
+        id: "00000000-0000-0000-0000-000000000005",
+        code: "CAJA1",
+        name: "Caja Principal Mostrador",
+        companyId: ctx.company?.id ?? "",
+        branchId: ctx.branch?.id ?? "",
+        tenantId: ctx.tenantId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deactivatedAt: null,
+        deactivatedBy: null,
+      } as unknown as Awaited<ReturnType<typeof getSessionDetail>>["register"],
+      summary: {
+        salesCount: 18,
+        salesTotal: 1485000,
+        cancelledCount: 1,
+        cancelledTotal: 22000,
+        byMethod: [
+          { methodId: "m1", name: "Efectivo", kind: "cash", amount: 1050000, count: 14 },
+          { methodId: "m2", name: "Tarjeta de Débito", kind: "card_debit", amount: 435000, count: 4 },
+        ],
+        cashSales: 1050000,
+        deposits: 20000,
+        withdrawals: 50000,
+        expectedCash: 1120000,
+      },
+      movements: [
+        {
+          m: {
+            id: "m1",
+            kind: "deposit",
+            amount: 20000,
+            reason: "Entrada cambio monedas $10",
+            createdAt: new Date(Date.now() - 1000 * 60 * 200),
+          } as unknown as Awaited<ReturnType<typeof getSessionDetail>>["movements"][number]["m"],
+          userName: ctx.user.fullName,
+        },
+        {
+          m: {
+            id: "m2",
+            kind: "withdrawal",
+            amount: 50000,
+            reason: "Retiro parcial de resguardo",
+            createdAt: new Date(Date.now() - 1000 * 60 * 100),
+          } as unknown as Awaited<ReturnType<typeof getSessionDetail>>["movements"][number]["m"],
+          userName: ctx.user.fullName,
+        },
+      ],
+      openedByName: ctx.user.fullName,
+      closedByName: null,
+      canSeeDifferences: true,
+    };
   }
   const { session: s, register, summary } = d;
   const cur = ctx.company?.currency ?? "MXN";

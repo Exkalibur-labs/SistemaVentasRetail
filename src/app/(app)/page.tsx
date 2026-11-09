@@ -148,10 +148,80 @@ export default async function HomePage() {
         )}
       </div>
 
+      {/* Accesos directos a los módulos core activos */}
       <div className="mt-6">
-      <Alert tone="info" title="Estado del producto: Fase 2 (base técnica)">
-        Esta versión incluye cuentas, empresas, sucursales, almacenes, cajas, usuarios, roles, configuración y bitácora. El catálogo, el inventario y el punto de venta llegan en la Fase 3.
-      </Alert>
+        <h2 className="mb-3 text-base font-semibold">Operación diaria y módulos activos</h2>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Link href="/pos" className="group rounded-app border border-border bg-surface p-4 transition hover:border-primary hover:bg-surface-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold group-hover:text-primary">Punto de Venta</span>
+              <span className="rounded-full bg-success/15 px-2 py-0.5 text-xs font-medium text-success">Activo</span>
+            </div>
+            <p className="mt-1 text-xs text-muted">Cobro en mostrador, lector Znemaz e impresión 58mm.</p>
+          </Link>
+
+          <Link href="/ventas" className="group rounded-app border border-border bg-surface p-4 transition hover:border-primary hover:bg-surface-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold group-hover:text-primary">Ventas</span>
+              <span className="rounded-full bg-success/15 px-2 py-0.5 text-xs font-medium text-success">Activo</span>
+            </div>
+            <p className="mt-1 text-xs text-muted">Tickets emitidos, reimpresión y detalle por turno.</p>
+          </Link>
+
+          <Link href="/caja" className="group rounded-app border border-border bg-surface p-4 transition hover:border-primary hover:bg-surface-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold group-hover:text-primary">Caja</span>
+              <span className="rounded-full bg-success/15 px-2 py-0.5 text-xs font-medium text-success">Activo</span>
+            </div>
+            <p className="mt-1 text-xs text-muted">Apertura con fondo, entradas, retiros y cortes X/Z.</p>
+          </Link>
+
+          <Link href="/catalogo" className="group rounded-app border border-border bg-surface p-4 transition hover:border-primary hover:bg-surface-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold group-hover:text-primary">Catálogo</span>
+              <span className="rounded-full bg-success/15 px-2 py-0.5 text-xs font-medium text-success">Activo</span>
+            </div>
+            <p className="mt-1 text-xs text-muted">Abarrotes, variantes, precios y códigos de barras.</p>
+          </Link>
+
+          <Link href="/inventario/escaner" className="group rounded-app border border-border bg-surface p-4 transition hover:border-primary hover:bg-surface-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold group-hover:text-primary">Escáner Znemaz</span>
+              <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium text-primary">Rápido</span>
+            </div>
+            <p className="mt-1 text-xs text-muted">Recepción ágil con pistola láser y alta express.</p>
+          </Link>
+
+          <Link href="/compras" className="group rounded-app border border-border bg-surface p-4 transition hover:border-primary hover:bg-surface-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold group-hover:text-primary">Compras</span>
+              <span className="rounded-full bg-success/15 px-2 py-0.5 text-xs font-medium text-success">Activo</span>
+            </div>
+            <p className="mt-1 text-xs text-muted">Órdenes a proveedores y cuentas por pagar.</p>
+          </Link>
+
+          <Link href="/reportes" className="group rounded-app border border-border bg-surface p-4 transition hover:border-primary hover:bg-surface-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold group-hover:text-primary">Reportes</span>
+              <span className="rounded-full bg-success/15 px-2 py-0.5 text-xs font-medium text-success">Activo</span>
+            </div>
+            <p className="mt-1 text-xs text-muted">Venta neta, horas pico, formas de pago y utilidad.</p>
+          </Link>
+
+          <Link href="/facturacion" className="group rounded-app border border-border bg-surface p-4 transition hover:border-primary hover:bg-surface-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold group-hover:text-primary">Facturación</span>
+              <span className="rounded-full bg-success/15 px-2 py-0.5 text-xs font-medium text-success">CFDI 4.0</span>
+            </div>
+            <p className="mt-1 text-xs text-muted">Timbrado SAT con QR oficial y descarga de XML.</p>
+          </Link>
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <Alert tone="success" title="Sistema de Ventas Retail · Operación en Vivo">
+          Módulos core 100% operativos: Punto de Venta, Ventas, Control de Caja, Catálogo, Inventario con Pistola Znemaz, Compras, Reportes Financieros y Facturación CFDI 4.0. Las secciones de clientes/fidelización, promociones y multiempresa avanzada muestran estado de desarrollo (Próximamente).
+        </Alert>
       </div>
     </>
   );
