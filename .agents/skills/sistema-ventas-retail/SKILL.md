@@ -163,3 +163,8 @@ Cualquier módulo no contemplado en el MVP core se muestra inhabilitado en la na
 
 ### Patrón Circuit Breaker en Server Components
 Todos los Server Components principales cuentan con un bloque `try/catch` que intercepta fallos de conectividad con la base de datos PostgreSQL local en despliegues serverless (Vercel), activando de forma transparente un fallback de datos de demostración contextualmente enriquecidos para abarrotes y autoservicios, erradicando por completo los errores de Error Boundary (`Ref. 2035095052`).
+
+### Header Adaptativo y Sucursal Única Demo
+* **Header Limpio e Insignia de Identidad:** Cuando una cuenta tiene 1 sola empresa y 1 sola sucursal (ej. demo o negocio retail unitario), no se renderizan dropdowns `<select>` confusos con flechas deshabilitadas. Se muestra una insignia con icono `<Store />`, nombre del negocio (`Abarrotes y Minisúper La Esquina`) y subtítulo de sucursal con truncamiento responsivo que no se desborda ni se corta en pantallas móviles/delgadas.
+* **Selectores Inteligentes Multi-Entidad:** Si la cuenta dispone de múltiples empresas o sucursales, solo se activa el `<select>` interactivo para la entidad múltiple correspondiente con su icono (`Building2` o `Store`) y tooltip descriptivo.
+* **Usuario Demo Prospectos:** Restringido a 1 sola sucursal (`Sucursal Centro (Matriz)`), reflejando con exactitud en las métricas del dashboard «1 activa que puedes ver».

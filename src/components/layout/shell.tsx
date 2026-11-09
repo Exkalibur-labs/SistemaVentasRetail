@@ -150,37 +150,79 @@ export function AppShell({ items, user, company, branch, companies, branches, sw
             <Menu className="size-5" />
           </button>
 
-          {company && (
-            <form action={switchAction} className="flex min-w-0 flex-1 items-center gap-2">
-              <select
-                name="companyId"
-                aria-label="Empresa activa"
-                defaultValue={company.id}
-                onChange={(e) => e.currentTarget.form?.requestSubmit()}
-                className="field !min-h-9 max-w-48 truncate !py-1 text-sm"
-                disabled={companies.length <= 1}
+          {company && companies.length <= 1 && branches.length <= 1 && (
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <div
+                className="flex min-w-0 items-center gap-1.5 sm:gap-2 rounded-app bg-surface-2/60 px-2 sm:px-2.5 py-1 text-xs sm:text-sm font-medium border border-border/50"
+                title={`${company.name}${branch ? ` · ${branch.name}` : ""}`}
               >
-                {companies.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-              {branch && (
-                <select
-                  name="branchId"
-                  aria-label="Sucursal activa"
-                  defaultValue={branch.id}
-                  onChange={(e) => e.currentTarget.form?.requestSubmit()}
-                  className="field !min-h-9 hidden max-w-48 truncate !py-1 text-sm sm:block"
-                  disabled={branches.length <= 1}
-                >
-                  {branches.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.name}
-                    </option>
-                  ))}
-                </select>
+                <Store className="size-4 shrink-0 text-primary" aria-hidden="true" />
+                <span className="font-semibold text-text truncate max-w-[140px] xs:max-w-[200px] sm:max-w-xs md:max-w-md">
+                  {company.name}
+                </span>
+                {branch && (
+                  <>
+                    <span className="text-muted/60 hidden xs:inline" aria-hidden="true">·</span>
+                    <span className="text-muted text-xs truncate max-w-[100px] sm:max-w-[180px] hidden xs:inline">
+                      {branch.name}
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          {company && (companies.length > 1 || branches.length > 1) && (
+            <form action={switchAction} className="flex min-w-0 flex-1 items-center gap-2">
+              {companies.length > 1 ? (
+                <div className="flex min-w-0 items-center gap-1.5" title="Empresa activa">
+                  <Building2 className="size-4 shrink-0 text-muted hidden sm:inline" aria-hidden="true" />
+                  <select
+                    name="companyId"
+                    aria-label="Empresa activa"
+                    defaultValue={company.id}
+                    onChange={(e) => e.currentTarget.form?.requestSubmit()}
+                    className="field !min-h-9 max-w-[130px] sm:max-w-48 truncate !py-1 text-xs sm:text-sm"
+                  >
+                    {companies.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <input type="hidden" name="companyId" value={company.id} />
+                  <span className="font-semibold text-text text-xs sm:text-sm truncate max-w-[120px] sm:max-w-44" title={company.name}>
+                    {company.name}
+                  </span>
+                </div>
+              )}
+
+              {branches.length > 1 ? (
+                <div className="flex min-w-0 items-center gap-1.5" title="Sucursal activa">
+                  <Store className="size-4 shrink-0 text-muted hidden sm:inline" aria-hidden="true" />
+                  <select
+                    name="branchId"
+                    aria-label="Sucursal activa"
+                    defaultValue={branch?.id}
+                    onChange={(e) => e.currentTarget.form?.requestSubmit()}
+                    className="field !min-h-9 max-w-[130px] sm:max-w-44 truncate !py-1 text-xs sm:text-sm"
+                  >
+                    {branches.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                branch && (
+                  <span className="text-muted text-xs truncate hidden sm:inline" title={branch.name}>
+                    · {branch.name}
+                  </span>
+                )
               )}
             </form>
           )}
