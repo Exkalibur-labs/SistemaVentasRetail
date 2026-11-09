@@ -1,7 +1,15 @@
 import { formatCents, formatQty } from "@/lib/money";
 
 export type TicketData = {
-  company: { tradeName: string; legalName?: string | null; taxId?: string | null; address?: Record<string, string | undefined> | null };
+  company: {
+    tradeName: string;
+    legalName?: string | null;
+    taxId?: string | null;
+    address?: Record<string, string | undefined> | null;
+    logoUrl?: string | null;
+    ticketHeader?: string | null;
+    ticketFooter?: string | null;
+  };
   branch: { name: string; address?: Record<string, string | undefined> | null; phone?: string | null };
   folio: string | null;
   soldAt: string | Date;
@@ -19,17 +27,26 @@ export type TicketData = {
   /** Promociones aplicadas con su explicación (p. ej. «2x1 Refrescos (2x1): −$18.50»). */
   promotions?: Array<{ description: string; amount: number }>;
   offline?: boolean;
+  /** Ancho de papel: 58mm (SUZWIP / portátiles) u 80mm (mostrador). */
+  format?: "58mm" | "80mm";
 };
 
 const addr = (a?: Record<string, string | undefined> | null) =>
   a ? [a.street && `${a.street} ${a.exteriorNumber ?? ""}`.trim(), a.neighborhood, a.city, a.state, a.postalCode && `C.P. ${a.postalCode}`].filter(Boolean).join(", ") : "";
 
-/** Ticket de venta para impresora térmica de 80 mm (también se ve en pantalla). */
-export function Ticket({ t }: { t: TicketData }) {
+/** Ticket de venta para impresora térmica (compatible con 58 mm y 80 mm). */
+export function Ticket({ t, width }: { t: TicketData; width?: "58mm" | "80mm" }) {
+  const is58mm = (width ?? t.format) === "58mm";
   const when = new Intl.DateTimeFormat("es-MX", { timeZone: t.timezone, dateStyle: "short", timeStyle: "short" }).format(new Date(t.soldAt));
   const money = (c: number) => formatCents(c, t.currency);
   return (
-    <div className="ticket mx-auto p-3" data-testid="ticket">
+    <div className={`${is58mm ? "ticket-58mm" : "ticket"} mx-auto p-3`} data-testid="ticket">
+      {t.company.logoUrl && (
+        <div className="mb-2 text-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={t.company.logoUrl} alt="Logo" className="mx-auto max-h-12 max-w-[120px] object-contain" />
+        </div>
+      )}
       <div className="text-center">
         <p className="text-sm font-bold">{t.company.tradeName}</p>
         {t.company.legalName && t.company.legalName !== t.company.tradeName && <p>{t.company.legalName}</p>}
@@ -37,6 +54,7 @@ export function Ticket({ t }: { t: TicketData }) {
         <p>{t.branch.name}</p>
         {addr(t.branch.address ?? t.company.address) && <p>{addr(t.branch.address ?? t.company.address)}</p>}
         {t.branch.phone && <p>Tel. {t.branch.phone}</p>}
+        {t.company.ticketHeader && <p className="mt-1 font-medium">{t.company.ticketHeader}</p>}
       </div>
       <hr className="my-2 border-dashed border-black" />
       <p>Folio: <b>{t.folio ?? "PENDIENTE"}</b></p>
@@ -86,7 +104,7 @@ export function Ticket({ t }: { t: TicketData }) {
       )}
       <hr className="my-2 border-dashed border-black" />
       <p className="text-center">Artículos: {formatQty(t.lines.reduce((a, l) => a + l.quantity, 0))}</p>
-      <p className="mt-1 text-center">¡Gracias por su compra!</p>
+      <p className="mt-1 text-center">{t.company.ticketFooter || "¡Gracias por su compra!"}</p>
       <p className="text-center">Este ticket no es un comprobante fiscal.</p>
     </div>
   );

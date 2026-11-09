@@ -120,6 +120,8 @@ export async function updateCompanySettings(ctx: ServiceContext, companyId: stri
       pos: input.pos,
       returns: input.returns,
       notifications: { lowStockEmail: input.notifications.lowStockEmail || null },
+      branding: input.branding ?? before.settings?.branding,
+      hardware: input.hardware ?? before.settings?.hardware,
     };
     const [after] = await tx
       .update(companies)

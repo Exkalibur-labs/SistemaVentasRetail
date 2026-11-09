@@ -6,6 +6,7 @@ export function InventarioTabs({ active }: { active: string }) {
       active={active}
       tabs={[
         { href: "/inventario", label: "Existencias" },
+        { href: "/inventario/escaner", label: "⚡ Escáner Znemaz" },
         { href: "/inventario/traspasos", label: "Traspasos" },
         { href: "/inventario/conteos", label: "Conteos físicos" },
       ]}

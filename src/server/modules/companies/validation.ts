@@ -81,5 +81,23 @@ export const companySettingsSchema = z.object({
   notifications: z.object({
     lowStockEmail: z.string().trim().email("Correo inválido").optional().or(z.literal("")).nullable(),
   }),
+  branding: z
+    .object({
+      primaryColor: z.string().trim().max(30).optional().or(z.literal("")).nullable(),
+      logoUrl: z.string().trim().url().optional().or(z.literal("")).nullable(),
+      ticketHeader: z.string().trim().max(500).optional().or(z.literal("")).nullable(),
+      ticketFooter: z.string().trim().max(500).optional().or(z.literal("")).nullable(),
+      theme: z.string().trim().max(30).optional().or(z.literal("")).nullable(),
+    })
+    .optional(),
+  hardware: z
+    .object({
+      scannerMode: z.enum(["hid_burst", "keyboard", "manual"]).default("hid_burst"),
+      scannerBeep: z.boolean().default(true),
+      printerWidth: z.enum(["58mm", "80mm"]).default("58mm"),
+      printerType: z.enum(["bluetooth", "browser", "usb", "network"]).default("bluetooth"),
+      bluetoothPrinterName: z.string().trim().max(100).optional().or(z.literal("")).nullable(),
+    })
+    .optional(),
 });
 export type CompanySettingsInput = z.infer<typeof companySettingsSchema>;
