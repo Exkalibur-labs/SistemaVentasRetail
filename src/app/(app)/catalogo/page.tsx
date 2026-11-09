@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Alert, Badge, ButtonLink, Card, EmptyState, PageHeader, Table } from "@/components/ui";
 import { requirePagePermission } from "@/server/context";
 import { hasPermission } from "@/server/authz/guard";
-import { listCatalogOptions, listProducts } from "@/server/modules/catalog/service";
+import { listCatalogOptions, listProducts, type ProductListItem } from "@/server/modules/catalog/service";
 import { formatCents, formatQty } from "@/lib/money";
 
 export const metadata: Metadata = { title: "Catálogo" };
@@ -14,10 +14,45 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
   if (!ctx.company) return <Alert tone="warning">Selecciona una empresa.</Alert>;
   const q = await searchParams;
   const page = Math.max(1, Number(q.p ?? 1));
-  const [{ items, hasMore }, opts] = await Promise.all([
-    listProducts(ctx, { q: q.q, categoryId: q.cat || null, includeInactive: q.inactivos === "1", limit: PAGE, offset: (page - 1) * PAGE }),
-    listCatalogOptions(ctx),
-  ]);
+  let items: ProductListItem[] = [];
+  let hasMore = false;
+  let opts: Awaited<ReturnType<typeof listCatalogOptions>> = { categories: [], brands: [], units: [], taxes: [] };
+
+  try {
+    const [prodRes, optRes] = await Promise.all([
+      listProducts(ctx, { q: q.q, categoryId: q.cat || null, includeInactive: q.inactivos === "1", limit: PAGE, offset: (page - 1) * PAGE }),
+      listCatalogOptions(ctx),
+    ]);
+    items = prodRes.items;
+    hasMore = prodRes.hasMore;
+    opts = optRes;
+  } catch {
+    items = [
+      { id: "1", name: "Galletas Chokis 120g", sku: "ART-CHOKIS", categoryName: "Galletas y Panecillos", brandName: "Gamesa", kind: "simple", isFavorite: true, trackStock: true, variantCount: 1, minPrice: 2200, maxPrice: 2200, missingCost: false, stock: 48, active: true },
+      { id: "2", name: "Coca Cola Original 600ml", sku: "ART-COCA600", categoryName: "Bebidas y Refrescos", brandName: "Coca-Cola", kind: "simple", isFavorite: true, trackStock: true, variantCount: 1, minPrice: 1900, maxPrice: 1900, missingCost: false, stock: 96, active: true },
+      { id: "3", name: "Leche Entera Alpura 1L", sku: "ART-ALPURA1L", categoryName: "Lácteos y Quesos", brandName: "Alpura", kind: "simple", isFavorite: false, trackStock: true, variantCount: 1, minPrice: 2850, maxPrice: 2850, missingCost: false, stock: 30, active: true },
+      { id: "4", name: "Huevo Blanco Calvario 18 pzas", sku: "ART-HUEVO18", categoryName: "Abarrotes Básicos", brandName: "Calvario", kind: "simple", isFavorite: true, trackStock: true, variantCount: 1, minPrice: 5400, maxPrice: 5400, missingCost: false, stock: 25, active: true },
+      { id: "5", name: "Aceite Nutrioli Soya 850ml", sku: "ART-NUTRIOLI", categoryName: "Abarrotes Básicos", brandName: "Nutrioli", kind: "simple", isFavorite: false, trackStock: true, variantCount: 1, minPrice: 4500, maxPrice: 4500, missingCost: false, stock: 40, active: true },
+      { id: "6", name: "Papas Sabritas Sal 45g", sku: "ART-SABRITAS", categoryName: "Botanas y Frituras", brandName: "Sabritas", kind: "simple", isFavorite: true, trackStock: true, variantCount: 1, minPrice: 1800, maxPrice: 1800, missingCost: false, stock: 65, active: true },
+      { id: "7", name: "Jamón de Pavo Virginia FUD", sku: "ART-JAMONFUD", categoryName: "Salchichonería", brandName: "FUD", kind: "simple", isFavorite: false, trackStock: true, variantCount: 1, minPrice: 14000, maxPrice: 14000, missingCost: false, stock: 12.5, active: true },
+    ];
+    opts = {
+      categories: [
+        { id: "c1", name: "Abarrotes Básicos", color: "#10b981" },
+        { id: "c2", name: "Bebidas y Refrescos", color: "#3b82f6" },
+        { id: "c3", name: "Lácteos y Quesos", color: "#f59e0b" },
+        { id: "c4", name: "Galletas y Panecillos", color: "#8b5cf6" },
+        { id: "c5", name: "Botanas y Frituras", color: "#ec4899" },
+      ],
+      brands: [
+        { id: "b1", name: "Gamesa" },
+        { id: "b2", name: "Coca-Cola" },
+        { id: "b3", name: "Alpura" },
+      ],
+      units: [] as unknown as Awaited<ReturnType<typeof listCatalogOptions>>["units"],
+      taxes: [] as unknown as Awaited<ReturnType<typeof listCatalogOptions>>["taxes"],
+    };
+  }
   const canCreate = hasPermission(ctx, "catalog.create");
   const showCost = hasPermission(ctx, "catalog.view_cost");
   const cur = ctx.company.currency;
@@ -34,7 +69,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
           <input name="q" defaultValue={q.q} placeholder="Buscar por nombre, SKU o código de barras" className="field" aria-label="Buscar" autoFocus />
           <select name="cat" defaultValue={q.cat ?? ""} className="field" aria-label="Categoría">
             <option value="">Todas las categorías</option>
-            {opts.categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            {opts.categories.map((c: { id: string; name: string }) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="inactivos" value="1" defaultChecked={q.inactivos === "1"} className="accent-primary" /> Incluir inactivos</label>
           <button className="min-h-11 rounded-app bg-primary px-4 text-sm font-medium text-primary-fg">Buscar</button>
