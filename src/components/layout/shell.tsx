@@ -74,6 +74,28 @@ export function AppShell({ items, user, company, branch, companies, branches, sw
         const prev = items[idx - 1];
         const separator = prev && (prev.group ?? "inicio") !== (item.group ?? "inicio");
         const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+
+        if (item.disabled) {
+          return (
+            <div key={item.href} className="contents">
+              {separator && <div className="my-1 border-t border-border" role="separator" />}
+              <div
+                className="group relative flex min-h-11 items-center justify-between rounded-app px-3 text-sm font-medium text-muted/60 cursor-not-allowed select-none transition hover:bg-surface-2/40"
+                title={item.tooltip ?? "Próximamente · Módulo en desarrollo"}
+                aria-disabled="true"
+              >
+                <div className="flex items-center gap-3">
+                  <Icon className="size-5 shrink-0 opacity-40" aria-hidden />
+                  <span className="opacity-70">{item.label}</span>
+                </div>
+                <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted border border-border/60 group-hover:border-primary/40 group-hover:text-primary transition">
+                  Próximamente
+                </span>
+              </div>
+            </div>
+          );
+        }
+
         return (
           <div key={item.href} className="contents">
           {separator && <div className="my-1 border-t border-border" role="separator" />}

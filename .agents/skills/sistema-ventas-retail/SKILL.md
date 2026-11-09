@@ -65,7 +65,7 @@ Tenant (Cuenta SaaS)
 
 > [!IMPORTANT]
 > **Token de Despliegue de Vercel (Almacenado en Workspace Padre Exkalibur):**
-> - **Token:** Almacenado en Workspace Padre Exkalibur (consultar `.agents/skills/` en raíz Exkalibur o variable `VERCEL_TOKEN`).
+> - **Token:** Almacenado de forma segura en el Workspace padre Exkalibur (`VERCEL_TOKEN` con vigencia de 60 días).
 > - **Fecha de emisión:** 7 de Noviembre de 2026.
 > - **Vigencia:** 60 días (Expira el 6 de Enero de 2027).
 > - **Scope / Equipo:** `joseom07-3483s-projects`
@@ -131,3 +131,35 @@ npx vercel deploy --prod --scope joseom07-3483s-projects --token <VERCEL_TOKEN>
    - Nunca quemar IDs de tenants, roles o credenciales en el código fuente. Toda configuración regional y tributaria reside en base de datos.
 6. **Organización Canónica en GitHub:**
    - El repositorio oficial reside bajo la organización: `git@github.com:Exkalibur-labs/SistemaVentasRetail.git`.
+
+---
+
+## 5. Mapeo de Módulos Core Activos vs. Próximamente (Fase 4/5) y Resiliencia Defensiva
+
+Para garantizar una experiencia fluida a clientes potenciales y prospectos durante demostraciones comerciales, el sistema categoriza estrictamente las secciones del menú:
+
+### Módulos Core 100% Activos
+* **Inicio (`/`):** Métricas consolidadas (Venta neta, Tickets, Ticket promedio, Devoluciones), accesos directos rápidos a los módulos operativos y bitácora reciente.
+* **Punto de Venta (`/pos`):** Venta táctil y por teclado, escáner HID Znemaz 1D/2D, tickets SUZWIP 58mm y cobro express.
+* **Ventas (`/ventas` y `/ventas/[id]`):** Historial de transacciones, folios, desglose por línea de producto, reimpresión y estado de pago.
+* **Caja (`/caja` y `/caja/[sessionId]`):** Apertura de turno con fondo fijo, entradas/salidas de efectivo, arqueo y cortes parciales (X) y definitivos (Z).
+* **Catálogo (`/catalogo`):** Catálogo de abarrotes de alta rotación (galletas, refrescos, lácteos, huevo, botanas, salchichonería), categorías, impuestos y códigos de barras.
+* **Inventario (`/inventario` y `/inventario/escaner`):** Existencias en almacén, semáforo de reorden (OK, Bajo, Agotado) y escaneo ágil con pistola Znemaz.
+* **Compras (`/compras`):** Proveedores principales (Gamesa, Coca-Cola FEMSA, Alpura, Sabritas), recepción de mercancía y saldos por pagar.
+* **Reportes (`/reportes`):** Analítica interactiva de ventas por día/hora, métodos de pago (efectivo vs. tarjeta) y utilidad bruta.
+* **Facturación (`/facturacion`):** Timbrado CFDI 4.0, QR SAT y descarga de XML.
+* **Configuración (`/configuracion`):** Personalización de marca y tropicalización (colores, logo, nombre comercial).
+
+### Secciones Desactivadas con Hover "Próximamente" (`ComingSoonView`)
+Cualquier módulo no contemplado en el MVP core se muestra inhabilitado en la navegación (`disabled: true`), con cursor no permitido, badge «Próximamente» y tooltip explicativo. Si se ingresa directamente por URL, renderiza la vista `ComingSoonView` amigable en lugar de un error:
+* **Clientes (`/clientes`):** Fidelización y crédito comercial (Fase 4).
+* **Promociones (`/promociones`):** Descuentos por volumen y 2x1 (Fase 4).
+* **Empresas (`/empresas`):** Multiempresa consolidada (Fase 4).
+* **Sucursales (`/sucursales`):** Gestión de sucursales físicas (Fase 4).
+* **Usuarios (`/usuarios`):** Aprovisionamiento de cajeros (Fase 4).
+* **Roles (`/roles`):** Matriz granular RBAC (Fase 4).
+* **Bitácora (`/bitacora`):** Auditoría forense detallada (Fase 4).
+* **Plataforma (`/plataforma`):** Consola multi-tenant SaaS (Fase 5).
+
+### Patrón Circuit Breaker en Server Components
+Todos los Server Components principales cuentan con un bloque `try/catch` que intercepta fallos de conectividad con la base de datos PostgreSQL local en despliegues serverless (Vercel), activando de forma transparente un fallback de datos de demostración contextualmente enriquecidos para abarrotes y autoservicios, erradicando por completo los errores de Error Boundary (`Ref. 2035095052`).
