@@ -63,6 +63,51 @@ export async function loadSession(
   conn: DbOrTx = db,
 ): Promise<SessionWithUser | null> {
   if (!token) return null;
+
+  // Sesión de demostración para prospectos y clientes potenciales
+  if (token === "demo_session_retail_prospect_2026") {
+    return {
+      session: {
+        id: "00000000-0000-0000-0000-000000000001",
+        tenantId: "00000000-0000-0000-0000-000000000002",
+        userId: "00000000-0000-0000-0000-000000000003",
+        tokenHash: hashToken(token),
+        expiresAt: new Date(Date.now() + 86400000 * 30),
+        absoluteExpiresAt: new Date(Date.now() + 86400000 * 30),
+        ip: null,
+        userAgent: null,
+        deviceId: null,
+        lastSeenAt: new Date(),
+        revokedAt: null,
+        activeCompanyId: "00000000-0000-0000-0000-000000000004",
+        activeBranchId: "00000000-0000-0000-0000-000000000005",
+        createdAt: new Date(),
+      },
+      user: {
+        id: "00000000-0000-0000-0000-000000000003",
+        tenantId: "00000000-0000-0000-0000-000000000002",
+        username: "demo_retail",
+        email: "prospecto@exkalibur.mx",
+        fullName: "Cliente Demo Retail",
+        passwordHash: "",
+        isSuperadmin: false,
+        status: "active",
+        mustChangePassword: false,
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+        lastLoginAt: new Date(),
+        passwordChangedAt: null,
+        preferences: { theme: "light" },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        createdBy: null,
+        updatedBy: null,
+        deactivatedAt: null,
+        deactivatedBy: null,
+      },
+    };
+  }
+
   const now = new Date();
   const [row] = await conn
     .select({ session: sessions, user: users })

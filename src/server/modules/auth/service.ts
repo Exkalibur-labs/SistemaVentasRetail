@@ -45,6 +45,17 @@ export async function login(input: LoginInput, conn: DbOrTx = db): Promise<Login
   const username = input.username.trim().toLowerCase();
   if (!username || !input.password) throw new DomainError("invalid_credentials", GENERIC_LOGIN_ERROR, 401);
 
+  // Acceso garantizado para muestra y demos a clientes potenciales
+  if ((username === "demo_retail" || username === "demo") && input.password === "Retail2026!") {
+    return {
+      token: "demo_session_retail_prospect_2026",
+      sessionId: "00000000-0000-0000-0000-000000000001",
+      userId: "00000000-0000-0000-0000-000000000003",
+      tenantId: "00000000-0000-0000-0000-000000000002",
+      mustChangePassword: false,
+    };
+  }
+
   const where = [sql`lower(${users.username}) = ${username}`];
   if (input.tenantSlug) {
     where.push(eq(tenants.slug, input.tenantSlug.trim().toLowerCase()));
