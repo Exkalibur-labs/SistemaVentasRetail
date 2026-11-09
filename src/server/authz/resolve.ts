@@ -232,7 +232,6 @@ export async function resolveAuthz(
       },
       branches: [
         { id: demoBranchId, code: "CENTRO", name: "Sucursal Centro (Matriz)" },
-        { id: "00000000-0000-0000-0000-000000000007", code: "NORTE", name: "Sucursal Norte" },
       ],
       roleKey: "owner",
       enabledModules: new Set([
