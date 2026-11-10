@@ -51,9 +51,14 @@ export function SettingsForm({
         <fieldset className="space-y-4 rounded-app border border-border p-4">
           <legend className="px-1 text-sm font-bold text-fg">🎨 Tropicalización y Marca</legend>
           <div className="grid gap-4 sm:grid-cols-2">
+            <FormField name="branding.storeName" label="Nombre Comercial del Negocio" hint="Nombre visible en la cabecera, POS y tickets de compra.">
+              <Input name="branding.storeName" placeholder="Abarrotes y Minisúper La Esquina" defaultValue={settings.branding?.storeName ?? "Abarrotes y Minisúper La Esquina"} />
+            </FormField>
             <FormField name="branding.logoUrl" label="URL del Logotipo" hint="Imagen visible en el encabezado de los tickets e interfaz.">
               <Input name="branding.logoUrl" placeholder="https://..." defaultValue={settings.branding?.logoUrl ?? ""} />
             </FormField>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
             <FormField name="branding.theme" label="Tema visual / Paleta" hint="Color principal de la aplicación.">
               <Select name="branding.theme" defaultValue={settings.branding?.theme ?? "emerald"}>
                 <option value="emerald">Verde Esmeralda (Retail / Abarrotes)</option>
@@ -63,11 +68,11 @@ export function SettingsForm({
                 <option value="slate">Gris Neutro / Minimalista</option>
               </Select>
             </FormField>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
             <FormField name="branding.ticketHeader" label="Encabezado del Ticket" hint="Texto o leyendas adicionales al inicio del recibo.">
               <Input name="branding.ticketHeader" placeholder="¡Gracias por su compra en Abarrotes La Esquina!" defaultValue={settings.branding?.ticketHeader ?? ""} />
             </FormField>
+          </div>
+          <div>
             <FormField name="branding.ticketFooter" label="Pie del Ticket" hint="Mensaje de despedida, redes o política de cambios.">
               <Input name="branding.ticketFooter" placeholder="Cambios únicamente dentro de los primeros 7 días." defaultValue={settings.branding?.ticketFooter ?? ""} />
             </FormField>

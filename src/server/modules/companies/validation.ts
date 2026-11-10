@@ -83,6 +83,7 @@ export const companySettingsSchema = z.object({
   }),
   branding: z
     .object({
+      storeName: z.string().trim().max(120).optional().or(z.literal("")).nullable(),
       primaryColor: z.string().trim().max(30).optional().or(z.literal("")).nullable(),
       logoUrl: z.string().trim().url().optional().or(z.literal("")).nullable(),
       ticketHeader: z.string().trim().max(500).optional().or(z.literal("")).nullable(),

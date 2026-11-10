@@ -190,3 +190,7 @@ En `/facturacion`:
 - **Compras:** Vistas completas y tolerantes a fallos en `/compras/recepciones`, `/compras/por-pagar`, `/compras/sugerencias` y `/compras/proveedores`.
 - **Guía Didáctica (`QuickStartGuide`):** Componente interactivo desplegado en el Dashboard de inicio (`/`) con 5 pasos secuenciales persistidos en `localStorage`: (1) Nombre y personalización en `/configuracion`, (2) Turno y fondo inicial en `/caja`, (3) Productos y escáner Znemaz en `/inventario/escaner`, (4) Cobro express y ticket 58mm en `/pos`, y (5) Emisión CFDI 4.0 en `/facturacion`.
 
+### 6.4 Blindaje en Configuración y Escáner Znemaz
+- **Configuración (`/configuracion`):** Server Component protegido con Circuit Breaker ante fallos de conexión SQL. Incluye campo editable para el **Nombre Comercial del Negocio** (`branding.storeName`) y persistencia resiliente de módulos, impuestos, métodos de pago y secuencias.
+- **Inventario Ágil (`/inventario/escaner`):** Endpoint `/api/v1/inventory/quick` blindado en `quickScanLookup`, `quickAddStock` y `quickCreateProductWithStock` para consultar existencias o registrar nuevos productos con pistola de códigos de barras Znemaz 1D/2D sin interrupción.
+

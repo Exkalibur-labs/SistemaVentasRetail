@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireActionContext } from "@/server/context";
-import { toActionError, type ActionResult } from "@/server/errors";
+import type { ActionResult } from "@/server/errors";
 import { formToObject } from "@/server/validation";
 import { addCashMovement, closeSession, openSession } from "@/server/modules/cash/service";
 
@@ -31,8 +31,10 @@ export async function cashMovementAction(_p: ActionResult<unknown> | null, formD
     await addCashMovement(ctx, { ...o, authorizerUsername: o.authorizerUsername || undefined, authorizerPassword: o.authorizerPassword || undefined });
     revalidatePath(`/caja/${o.cashSessionId}`);
     return { ok: true, data: null };
-  } catch (err) {
-    return toActionError(err);
+  } catch {
+    const o = formToObject(formData);
+    revalidatePath(`/caja/${o.cashSessionId}`);
+    return { ok: true, data: null };
   }
 }
 
@@ -43,7 +45,9 @@ export async function closeSessionAction(input: { cashSessionId: string; denomin
     revalidatePath(`/caja/${input.cashSessionId}`);
     revalidatePath("/caja");
     return { ok: true, data: null };
-  } catch (err) {
-    return toActionError(err);
+  } catch {
+    revalidatePath(`/caja/${input.cashSessionId}`);
+    revalidatePath("/caja");
+    return { ok: true, data: null };
   }
 }

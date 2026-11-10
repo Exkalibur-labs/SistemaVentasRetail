@@ -56,6 +56,7 @@ export type CompanySettings = {
   returns?: { maxDays?: number; allowWithoutTicket?: boolean; cashRefundNeedsAuthorization?: boolean };
   /** Tropicalización / Personalización de marca */
   branding?: {
+    storeName?: string | null;
     primaryColor?: string | null;
     logoUrl?: string | null;
     ticketHeader?: string | null;
