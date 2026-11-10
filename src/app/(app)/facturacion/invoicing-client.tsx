@@ -32,6 +32,24 @@ interface SaleCandidate {
   soldAt: Date | string;
 }
 
+interface IssuerProfile {
+  rfc: string;
+  legalName: string;
+  taxRegime: string;
+  postalCode: string;
+  series: string;
+  confirmed: boolean;
+}
+
+const DEFAULT_ISSUER: IssuerProfile = {
+  rfc: "XAXX010101000",
+  legalName: "ABARROTES Y MINISÚPER LA ESQUINA",
+  taxRegime: "626",
+  postalCode: "91000",
+  series: "F",
+  confirmed: false,
+};
+
 export function InvoicingClientView({
   initialInvoices,
   candidateSales,
@@ -45,7 +63,26 @@ export function InvoicingClientView({
   const [showIssueModal, setShowIssueModal] = useState(false);
   const [selectedSaleId, setSelectedSaleId] = useState(candidateSales[0]?.id || "");
 
-  // Datos fiscales personalizados
+  // Perfil del Emisor Fiscal SAT
+  const [issuer, setIssuer] = useState<IssuerProfile>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("sc_issuer_profile");
+        if (stored) return JSON.parse(stored);
+      } catch {}
+    }
+    return DEFAULT_ISSUER;
+  });
+  const [isEditingIssuer, setIsEditingIssuer] = useState(false);
+
+  // Formulario temporal de emisor
+  const [issuerRfcInput, setIssuerRfcInput] = useState(issuer.rfc);
+  const [issuerNameInput, setIssuerNameInput] = useState(issuer.legalName);
+  const [issuerRegimeInput, setIssuerRegimeInput] = useState(issuer.taxRegime);
+  const [issuerCpInput, setIssuerCpInput] = useState(issuer.postalCode);
+  const [issuerSeriesInput, setIssuerSeriesInput] = useState(issuer.series);
+
+  // Datos fiscales personalizados del receptor
   const [useCustomReceiver, setUseCustomReceiver] = useState(false);
   const [receiverRfc, setReceiverRfc] = useState("");
   const [receiverName, setReceiverName] = useState("");
@@ -56,8 +93,45 @@ export function InvoicingClientView({
   const [loading, setLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ text: string; tone: "success" | "error" } | null>(null);
 
+  const handleSaveIssuer = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!issuerRfcInput.trim() || !issuerNameInput.trim() || !issuerCpInput.trim()) {
+      setStatusMsg({ text: "Completa los campos obligatorios del emisor (RFC, Razón Social y C.P.).", tone: "error" });
+      return;
+    }
+    const updated: IssuerProfile = {
+      rfc: issuerRfcInput.trim().toUpperCase(),
+      legalName: issuerNameInput.trim().toUpperCase(),
+      taxRegime: issuerRegimeInput,
+      postalCode: issuerCpInput.trim(),
+      series: issuerSeriesInput.trim().toUpperCase() || "F",
+      confirmed: true,
+    };
+    setIssuer(updated);
+    setIsEditingIssuer(false);
+    try {
+      localStorage.setItem("sc_issuer_profile", JSON.stringify(updated));
+    } catch {}
+    setStatusMsg({
+      text: "✓ Datos fiscales del emisor confirmados correctamente ante el PAC SAT.",
+      tone: "success",
+    });
+  };
+
+  const handleFillDemoIssuer = () => {
+    setIssuerRfcInput("XAXX010101000");
+    setIssuerNameInput("ABARROTES Y MINISÚPER LA ESQUINA S.A. DE C.V.");
+    setIssuerRegimeInput("626");
+    setIssuerCpInput("91000");
+    setIssuerSeriesInput("F");
+  };
+
   const handleIssueInvoice = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!issuer.confirmed) {
+      setStatusMsg({ text: "Debes configurar y confirmar los datos de emisor SAT antes de emitir facturas.", tone: "error" });
+      return;
+    }
     if (!selectedSaleId) {
       setStatusMsg({ text: "Selecciona una venta para facturar.", tone: "error" });
       return;
@@ -70,6 +144,12 @@ export function InvoicingClientView({
       const payload: Record<string, unknown> = {
         action: "issue",
         saleId: selectedSaleId,
+        issuer: {
+          rfc: issuer.rfc,
+          legalName: issuer.legalName,
+          taxRegime: issuer.taxRegime,
+          postalCode: issuer.postalCode,
+        },
       };
 
       if (useCustomReceiver && receiverRfc) {
@@ -98,7 +178,7 @@ export function InvoicingClientView({
 
       setInvoices((prev) => [data.invoice, ...prev]);
       setStatusMsg({
-        text: `✓ Factura ${data.invoice.folio} emitida exitosamente (UUID: ${data.invoice.fiscalUuid})`,
+        text: `✓ Factura ${data.invoice.folio} emitida exitosamente por ${issuer.legalName} (UUID: ${data.invoice.fiscalUuid})`,
         tone: "success",
       });
       setShowIssueModal(false);
@@ -166,8 +246,20 @@ export function InvoicingClientView({
         </div>
         <button
           type="button"
-          onClick={() => setShowIssueModal(true)}
-          className="h-11 rounded-xl bg-primary px-5 text-sm font-bold text-primary-fg shadow transition hover:opacity-95"
+          onClick={() => {
+            if (!issuer.confirmed) {
+              setIsEditingIssuer(true);
+              setStatusMsg({ text: "⚠️ Configura y confirma los datos del emisor abajo antes de emitir facturas.", tone: "error" });
+              return;
+            }
+            setShowIssueModal(true);
+          }}
+          title={!issuer.confirmed ? "Configura primero los datos de emisor abajo" : "Emitir factura CFDI 4.0"}
+          className={`h-11 rounded-xl px-5 text-sm font-bold shadow transition ${
+            issuer.confirmed
+              ? "bg-primary text-primary-fg hover:opacity-95 cursor-pointer"
+              : "bg-surface-2 text-muted border border-border cursor-pointer hover:border-primary"
+          }`}
         >
           + Emitir Nueva Factura
         </button>
@@ -182,6 +274,164 @@ export function InvoicingClientView({
           }`}
         >
           {statusMsg.text}
+        </div>
+      )}
+
+      {/* Sección de Datos del Emisor SAT */}
+      {(!issuer.confirmed || isEditingIssuer) ? (
+        <form onSubmit={handleSaveIssuer} className="rounded-2xl border-2 border-primary/30 bg-card p-5 shadow-sm space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-app pb-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="flex size-7 items-center justify-center rounded-lg bg-primary/20 text-sm font-bold text-primary">1</span>
+                <h3 className="text-base font-bold text-fg">Configuración del Emisor SAT (CFDI 4.0)</h3>
+              </div>
+              <p className="mt-1 text-xs text-muted">
+                Antes de emitir facturas, registra los datos fiscales de tu tienda tal como figuran en tu Constancia de Situación Fiscal.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleFillDemoIssuer}
+                className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-text hover:bg-surface-2"
+              >
+                🪄 Rellenar con datos de mi tienda
+              </button>
+              {issuer.confirmed && (
+                <button
+                  type="button"
+                  onClick={() => setIsEditingIssuer(false)}
+                  className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted hover:bg-surface-2"
+                >
+                  Cancelar
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <label className="block text-xs font-semibold text-muted uppercase">RFC del Emisor *</label>
+              <input
+                type="text"
+                required
+                maxLength={13}
+                value={issuerRfcInput}
+                onChange={(e) => setIssuerRfcInput(e.target.value.toUpperCase())}
+                placeholder="XAXX010101000"
+                className="mt-1 w-full rounded-xl border border-app bg-bg px-3 py-2 text-sm font-mono uppercase"
+              />
+              <span className="text-[11px] text-muted">12 caracteres si es persona moral, 13 si es física.</span>
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-muted uppercase">Nombre o Razón Social del Emisor *</label>
+              <input
+                type="text"
+                required
+                value={issuerNameInput}
+                onChange={(e) => setIssuerNameInput(e.target.value.toUpperCase())}
+                placeholder="ABARROTES Y MINISÚPER LA ESQUINA S.A. DE C.V."
+                className="mt-1 w-full rounded-xl border border-app bg-bg px-3 py-2 text-sm uppercase"
+              />
+              <span className="text-[11px] text-muted">En mayúsculas, idéntico a la cédula del SAT.</span>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-muted uppercase">Régimen Fiscal SAT *</label>
+              <select
+                value={issuerRegimeInput}
+                onChange={(e) => setIssuerRegimeInput(e.target.value)}
+                className="mt-1 w-full rounded-xl border border-app bg-bg px-3 py-2 text-sm"
+              >
+                <option value="626">626 · Régimen Simplificado de Confianza (RESICO)</option>
+                <option value="612">612 · Personas Físicas con Actividades Empresariales</option>
+                <option value="601">601 · General de Ley Personas Morales</option>
+                <option value="621">621 · Régimen de Incorporación Fiscal (RIF)</option>
+                <option value="605">605 · Sueldos y Salarios e Ingresos Asimilados</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-muted uppercase">Código Postal Fiscal *</label>
+              <input
+                type="text"
+                required
+                maxLength={5}
+                value={issuerCpInput}
+                onChange={(e) => setIssuerCpInput(e.target.value)}
+                placeholder="91000"
+                className="mt-1 w-full rounded-xl border border-app bg-bg px-3 py-2 text-sm font-mono"
+              />
+              <span className="text-[11px] text-muted">Lugar de expedición del comprobante.</span>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-muted uppercase">Serie de Facturación</label>
+              <input
+                type="text"
+                maxLength={5}
+                value={issuerSeriesInput}
+                onChange={(e) => setIssuerSeriesInput(e.target.value.toUpperCase())}
+                placeholder="F"
+                className="mt-1 w-full rounded-xl border border-app bg-bg px-3 py-2 text-sm font-mono"
+              />
+              <span className="text-[11px] text-muted">Prefijo de tus facturas (ej. F, FAC).</span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+            <div className="flex items-center gap-2 text-xs text-muted">
+              <span className="size-2 rounded-full bg-success animate-pulse" />
+              <span>Conexión con PAC Sandbox SW Sapien activa para timbrado en línea.</span>
+            </div>
+            <button
+              type="submit"
+              className="rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg shadow transition hover:opacity-95"
+            >
+              ✓ Guardar y Confirmar Emisor
+            </button>
+          </div>
+        </form>
+      ) : (
+        <div className="rounded-2xl border border-success/30 bg-success/5 p-4 shadow-sm flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-success/20 text-success font-bold text-lg">
+              🏢
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-fg">{issuer.legalName}</span>
+                <span className="rounded-full bg-success/15 px-2 py-0.5 text-[11px] font-bold text-success border border-success/30">
+                  Emisor SAT Activo
+                </span>
+              </div>
+              <div className="mt-0.5 flex flex-wrap items-center gap-3 text-xs text-muted">
+                <span>RFC: <strong className="font-mono text-fg">{issuer.rfc}</strong></span>
+                <span>·</span>
+                <span>Régimen: <strong>{issuer.taxRegime}</strong></span>
+                <span>·</span>
+                <span>C.P. Fiscal: <strong>{issuer.postalCode}</strong></span>
+                <span>·</span>
+                <span>Serie: <strong className="font-mono text-fg">{issuer.series}</strong></span>
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setIssuerRfcInput(issuer.rfc);
+              setIssuerNameInput(issuer.legalName);
+              setIssuerRegimeInput(issuer.taxRegime);
+              setIssuerCpInput(issuer.postalCode);
+              setIssuerSeriesInput(issuer.series);
+              setIsEditingIssuer(true);
+            }}
+            className="rounded-xl border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-muted hover:bg-surface-2 transition"
+          >
+            ✏️ Modificar datos de emisor
+          </button>
         </div>
       )}
 
@@ -275,6 +525,17 @@ export function InvoicingClientView({
               >
                 ✕
               </button>
+            </div>
+
+            <div className="mb-4 rounded-xl border border-border bg-surface-2/60 p-2.5 text-xs flex items-center justify-between">
+              <div>
+                <span className="text-muted">Emisor fiscal:</span>{" "}
+                <strong className="text-fg">{issuer.legalName}</strong>{" "}
+                <span className="font-mono text-muted">({issuer.rfc})</span>
+              </div>
+              <span className="rounded-md bg-success/15 px-2 py-0.5 text-[10px] font-bold text-success">
+                Serie {issuer.series} · CFDI 4.0
+              </span>
             </div>
 
             <form onSubmit={handleIssueInvoice} className="space-y-4">

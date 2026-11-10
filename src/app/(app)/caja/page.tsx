@@ -69,6 +69,18 @@ export default async function CashPage() {
   return (
     <>
       <PageHeader title="Caja" description={`Turnos de ${ctx.branch.name}. Abre la caja con el fondo inicial antes de vender.`} />
+
+      <div className="mb-4 rounded-xl border border-primary/25 bg-primary/5 p-4 text-xs text-text flex items-start gap-3">
+        <span className="text-xl">💡</span>
+        <div>
+          <strong className="text-sm font-semibold text-fg block">¿Por qué es importante registrar el Fondo Inicial?</strong>
+          <span className="text-muted leading-relaxed">
+            El fondo inicial representa las monedas y billetes (morralla) con los que arranca el cajero su jornada para dar cambio.
+            Al realizar el arqueo al final del día (Corte X o Z), el sistema suma las ventas cobradas en efectivo más este fondo inicial,
+            evitando discrepancias o falsos sobrantes.
+          </span>
+        </div>
+      </div>
       {regs.length === 0 ? (
         <EmptyState title="Esta sucursal no tiene cajas" description="Agrégalas en Sucursales." />
       ) : (

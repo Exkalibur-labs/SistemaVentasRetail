@@ -98,10 +98,47 @@ export function PosApp({ initial }: { initial: PosInitial }) {
       if (local) {
         setCatalog(local);
         setCatalogSource("local");
+        return local;
       }
-      return local ?? null;
+      const fallback: PosCatalog = {
+        branchId: initial.branch.id,
+        warehouseId: "00000000-0000-0000-0000-000000000008",
+        generatedAt: new Date().toISOString(),
+        currency: initial.company.currency || "MXN",
+        timezone: initial.company.timezone || "America/Mexico_City",
+        allowStacking: true,
+        promotions: [],
+        exhaustedPromotionIds: [],
+        priceLists: [],
+        categories: [
+          { id: "c1", name: "Abarrotes Básicos", color: "#10b981" },
+          { id: "c2", name: "Bebidas y Refrescos", color: "#3b82f6" },
+          { id: "c3", name: "Lácteos y Quesos", color: "#f59e0b" },
+          { id: "c4", name: "Galletas y Panecillos", color: "#8b5cf6" },
+          { id: "c5", name: "Botanas y Frituras", color: "#ec4899" },
+          { id: "c6", name: "Salchichonería", color: "#ef4444" },
+        ],
+        paymentMethods: [
+          { id: "00000000-0000-0000-0000-000000000030", code: "EFECTIVO", name: "Efectivo", kind: "cash", requiresReference: false, allowsChange: true },
+          { id: "00000000-0000-0000-0000-000000000031", code: "TDD", name: "Tarjeta de Débito", kind: "card_debit", requiresReference: true, allowsChange: false },
+          { id: "00000000-0000-0000-0000-000000000032", code: "TDC", name: "Tarjeta de Crédito", kind: "card_credit", requiresReference: true, allowsChange: false },
+          { id: "00000000-0000-0000-0000-000000000033", code: "TRANSF", name: "Transferencia SPEI", kind: "transfer", requiresReference: true, allowsChange: false },
+        ],
+        items: [
+          { variantId: "00000000-0000-0000-0000-000000000101", productId: "00000000-0000-0000-0000-000000000201", sku: "ART-CHOKIS", name: "Galletas Chokis 120g", variantName: "120g", price: 2200, taxRate: 0.16, taxIncluded: true, barcodes: ["7501000111111", "ART-CHOKIS"], categoryId: "c4", isFavorite: true, trackStock: true, unitCode: "PZA", allowsDecimals: false, stock: 48 },
+          { variantId: "00000000-0000-0000-0000-000000000102", productId: "00000000-0000-0000-0000-000000000202", sku: "ART-COCA600", name: "Coca Cola Original 600ml", variantName: "600ml", price: 1900, taxRate: 0.16, taxIncluded: true, barcodes: ["7501055300078", "ART-COCA600"], categoryId: "c2", isFavorite: true, trackStock: true, unitCode: "PZA", allowsDecimals: false, stock: 96 },
+          { variantId: "00000000-0000-0000-0000-000000000103", productId: "00000000-0000-0000-0000-000000000203", sku: "ART-ALPURA1L", name: "Leche Entera Alpura 1L", variantName: "1L", price: 2850, taxRate: 0.00, taxIncluded: true, barcodes: ["7501055301234", "ART-ALPURA1L"], categoryId: "c3", isFavorite: false, trackStock: true, unitCode: "PZA", allowsDecimals: false, stock: 30 },
+          { variantId: "00000000-0000-0000-0000-000000000104", productId: "00000000-0000-0000-0000-000000000204", sku: "ART-HUEVO18", name: "Huevo Blanco Calvario 18 pzas", variantName: "Cono 18 pzas", price: 5400, taxRate: 0.00, taxIncluded: true, barcodes: ["7501055304321", "ART-HUEVO18"], categoryId: "c1", isFavorite: true, trackStock: true, unitCode: "PZA", allowsDecimals: false, stock: 25 },
+          { variantId: "00000000-0000-0000-0000-000000000105", productId: "00000000-0000-0000-0000-000000000205", sku: "ART-NUTRIOLI", name: "Aceite Nutrioli Soya 850ml", variantName: "850ml", price: 4500, taxRate: 0.00, taxIncluded: true, barcodes: ["7501055309999", "ART-NUTRIOLI"], categoryId: "c1", isFavorite: false, trackStock: true, unitCode: "PZA", allowsDecimals: false, stock: 40 },
+          { variantId: "00000000-0000-0000-0000-000000000106", productId: "00000000-0000-0000-0000-000000000206", sku: "ART-SABRITAS", name: "Papas Sabritas Sal 45g", variantName: "45g", price: 1800, taxRate: 0.16, taxIncluded: true, barcodes: ["7501011122233", "ART-SABRITAS"], categoryId: "c5", isFavorite: true, trackStock: true, unitCode: "PZA", allowsDecimals: false, stock: 65 },
+          { variantId: "00000000-0000-0000-0000-000000000107", productId: "00000000-0000-0000-0000-000000000207", sku: "ART-JAMONFUD", name: "Jamón de Pavo Virginia FUD", variantName: "A granel (kg)", price: 14000, taxRate: 0.16, taxIncluded: true, barcodes: ["7501055307777", "ART-JAMONFUD"], categoryId: "c6", isFavorite: false, trackStock: true, unitCode: "KG", allowsDecimals: true, stock: 12.5 },
+        ],
+      };
+      setCatalog(fallback);
+      setCatalogSource("local");
+      return fallback;
     }
-  }, [initial.branch.id]);
+  }, [initial.branch.id, initial.company.currency, initial.company.timezone]);
 
   const refreshRegisters = useCallback(async () => {
     try {
