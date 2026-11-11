@@ -19,6 +19,7 @@
     "test:integration": "vitest run tests/integration",
     "check": "npm run typecheck && npm run lint && npm test && npm run build",
     "test:e2e": "node tests/e2e/pos.mjs && node tests/e2e/smoke.mjs && node tests/e2e/compras.mjs && node tests/e2e/clientes.mjs && node tests/e2e/devoluciones.mjs && node tests/e2e/promociones.mjs && node tests/e2e/reportes.mjs",
+    "test:e2e:agent": "node scripts/agent-e2e-evaluator.mjs",
     "stock:verify": "tsx scripts/verify-stock.ts"
   },
   "dependencies": {
