@@ -194,3 +194,12 @@ En `/facturacion`:
 - **Configuración (`/configuracion`):** Server Component protegido con Circuit Breaker ante fallos de conexión SQL. Incluye campo editable para el **Nombre Comercial del Negocio** (`branding.storeName`) y persistencia resiliente de módulos, impuestos, métodos de pago y secuencias.
 - **Inventario Ágil (`/inventario/escaner`):** Endpoint `/api/v1/inventory/quick` blindado en `quickScanLookup`, `quickAddStock` y `quickCreateProductWithStock` para consultar existencias o registrar nuevos productos con pistola de códigos de barras Znemaz 1D/2D sin interrupción.
 
+---
+
+## 7. Arquitectura de Pruebas E2E y Validación Agéntica
+
+- **Estándar Canónico:** Alineado con la skill padre `exkalibur-autonomous-e2e`.
+- **Especificaciones de Historias de Usuario:** Residen en `tests/e2e/specs/*.spec.md` (`01-pos-caja-offline-corte-z`, `02-clientes-credito-abonos`, `03-compras-inventario-inmutable`).
+- **Runner Playwright:** Ejecutable mediante `npm run test:e2e` encadenando las 7 suites del sistema (`pos.mjs`, `smoke.mjs`, `compras.mjs`, `clientes.mjs`, `devoluciones.mjs`, `promociones.mjs`, `reportes.mjs`), con capturas en `tests/e2e/shots/`.
+- **Evaluador Agéntico EPMS:** `npm run test:e2e:agent` (`scripts/agent-e2e-evaluator.mjs`) corre las suites y reporta telemetría en tiempo real a `https://exkalibur.mx/api/mcp` bajo `actualizar_telemetria_agente`. Ante fallas, consolida el paquete forense para el bucle de auto-reparación (Self-Healing).
+
