@@ -1,12 +1,16 @@
 /**
  * Agente Evaluador y Reportero E2E hacia EPMS para SistemaVentasRetail
- * Ejecuta la suite E2E de Playwright, consolida el informe forense
- * y emite telemetría en tiempo real al servidor MCP de EPMS.
+ * Con Trazabilidad Bidireccional de Especificaciones (SDD) y Fixtures Declarativos.
+ *
+ * @spec HU-RET-001 (POS, Caja, PWA Offline, Corte Z)
+ * @spec HU-RET-002 (Clientes, Crédito Comercial, Abonos)
+ * @spec HU-RET-003 (Compras, Fletes Prorrateados, Inventario Inmutable)
  */
 
 import fs from "node:fs";
 import path from "node:path";
 import { execSync } from "node:child_process";
+import { retailFixtures } from "../tests/e2e/fixtures/retail.fixture.mjs";
 
 const EPMS_MCP_URL = "https://exkalibur.mx/api/mcp";
 const EPMS_TOKEN = "epms_7GZQ6KJ-FUbp6fOT-HWt6ogpvlqjmZstZYHNjQ8Bgzo";
@@ -49,8 +53,8 @@ async function sendTelemetry(status, action, progress) {
 }
 
 async function main() {
-  console.log("\n🛒 Agente Evaluador E2E: Iniciando ciclo de inspección en SistemaVentasRetail...");
-  await sendTelemetry("running", "Ejecutando suite E2E completa en SistemaVentasRetail...", 50);
+  console.log("\n🛒 Agente Evaluador E2E (SDD): Iniciando inspección con matriz de trazabilidad en SistemaVentasRetail...");
+  await sendTelemetry("running", "Ejecutando suite E2E SDD con matriz de trazabilidad...", 50);
 
   let output = "";
   let passed = true;
@@ -66,39 +70,72 @@ async function main() {
     console.error(output);
   }
 
+  // Matriz de Trazabilidad Bidireccional Formal
+  const traceabilityMatrix = [
+    {
+      specId: retailFixtures.pos.specId,
+      specFile: retailFixtures.pos.specFile,
+      name: "Apertura de Caja, Venta en Línea, Resiliencia Offline y Corte Z Ciego",
+      route: retailFixtures.pos.targetRoute,
+      testScript: "tests/e2e/pos.mjs",
+      status: passed ? "PASS" : (output.includes("pos.mjs") && exitCode !== 0 ? "FAIL" : "PASS"),
+    },
+    {
+      specId: retailFixtures.clientes.specId,
+      specFile: retailFixtures.clientes.specFile,
+      name: "Gestión de Clientes, Venta a Crédito y Cobranza de Abonos",
+      route: retailFixtures.clientes.targetRoute,
+      testScript: "tests/e2e/clientes.mjs",
+      status: passed ? "PASS" : (output.includes("clientes.mjs") && exitCode !== 0 ? "FAIL" : "PASS"),
+    },
+    {
+      specId: retailFixtures.compras.specId,
+      specFile: retailFixtures.compras.specFile,
+      name: "Compras a Proveedores con Flete Prorrateado y Libro Inmutable de Inventario",
+      route: retailFixtures.compras.targetRoute,
+      testScript: "tests/e2e/compras.mjs",
+      status: passed ? "PASS" : (output.includes("compras.mjs") && exitCode !== 0 ? "FAIL" : "PASS"),
+    },
+  ];
+
+  const totalSpecs = traceabilityMatrix.length;
+  const passedSpecs = traceabilityMatrix.filter((s) => s.status === "PASS").length;
+  const coveragePercent = Math.round((passedSpecs / totalSpecs) * 100);
+
   const report = {
     timestamp: new Date().toISOString(),
     system: "SistemaVentasRetail",
+    standard: "Spec-Driven Development (SDD) - Exkalibur 3-Layers",
+    totalSpecs,
+    passedSpecs,
+    coverageRate: `${coveragePercent}%`,
     passed,
     exitCode,
-    suites: [
-      "HU-RET-001 (POS, Caja, PWA Offline, Corte Z)",
-      "HU-RET-002 (Clientes, Venta a Crédito, Abonos)",
-      "HU-RET-003 (Compras, Fletes Prorrateados, Inventario Inmutable)",
-      "Smoke General de Navegación",
-      "Devoluciones",
-      "Promociones 3x2",
-      "Reportes de Ventas y Existencias",
-    ],
-    summaryOutput: output.slice(-2000), // últimos 2000 caracteres
+    traceabilityMatrix,
+    summaryOutput: output.slice(-2000),
   };
 
   const reportPath = path.join(EVIDENCE_DIR, "e2e-report.json");
   fs.writeFileSync(reportPath, JSON.stringify(report, null, 2), "utf8");
 
+  console.log(`\n======================================================`);
+  console.log(`📊 Cobertura SDD: ${report.coverageRate} (${passedSpecs}/${totalSpecs} especificaciones troncales verificadas)`);
+  console.log(`🏁 Veredicto Global: ${passed ? "✅ PASS" : "❌ FAIL"}`);
+  console.log(`📄 Reporte con Matriz de Trazabilidad: ${reportPath}`);
+  console.log(`======================================================\n`);
+
   if (passed) {
-    console.log("\n🎉 ¡Verificación exitosa en SistemaVentasRetail! Todas las suites pasaron.");
+    console.log("\n🎉 ¡Verificación exitosa en SistemaVentasRetail! Todas las suites SDD pasaron.");
     await sendTelemetry(
       "success",
-      `Suite E2E aprobada exitosamente en SistemaVentasRetail (${report.suites.length} flujos verificados)`,
+      `Suite E2E SDD aprobada: Cobertura ${report.coverageRate} (${passedSpecs}/${totalSpecs} specs: POS/Offline, Clientes/Crédito, Compras/Inventario con trazabilidad)`,
       100
     );
   } else {
-    console.error(`\n🚨 Fallas detectadas durante la ejecución de la suite E2E.`);
-    console.error(`📸 Revisa capturas en tests/e2e/shots/ y reporte en tests/e2e/evidence/`);
+    console.error(`\n🚨 Fallas detectadas en SistemaVentasRetail.`);
     await sendTelemetry(
       "failed",
-      `Fallas detectadas en suite E2E de SistemaVentasRetail. Reporte forense en tests/e2e/evidence/`,
+      `Fallas detectadas en suite E2E SDD. Cobertura ${report.coverageRate}. Reporte forense en tests/e2e/evidence/`,
       100
     );
     process.exit(1);

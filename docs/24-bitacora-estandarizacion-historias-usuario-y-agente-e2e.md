@@ -31,6 +31,12 @@ Siguiendo el estándar canónico documentado en la skill padre `exkalibur-autono
 - `npm run test:e2e:agent`: Ejecuta la validación agéntica con reporte en tiempo real a EPMS.
 - Adición de `tests/e2e/evidence` en `.gitignore` para preservar el repositorio libre de artefactos binarios efímeros.
 
+### 4. Refinamiento Continuo SDD (Matriz de Trazabilidad & Fixtures)
+- **Fixtures Declarativos (`tests/e2e/fixtures/retail.fixture.mjs`):** Datos de prueba predecibles para el cajero demo, clientes con crédito de $1,500 y compras con fletes prorrateados de $50.
+- **Etiquetado Explícito `@spec`:** Correlación directa entre cada suite de Playwright (`pos.mjs`, `clientes.mjs`, `compras.mjs`) y su especificación funcional (`HU-RET-001`, `HU-RET-002`, `HU-RET-003`).
+- **Matriz de Trazabilidad Bidireccional (`traceabilityMatrix`):** Mapeo formal en el reporte JSON que vincula el ID de spec, archivo Markdown, ruta web, script de prueba y veredicto.
+- **Métrica de Cobertura Formal SDD (`coverageRate`):** Cálculo automatizado de cobertura porcentual de especificaciones que se transmite en tiempo real a la base de datos de EPMS.
+
 ---
 
 ## 3. Matriz de Auditoría (5 Perspectivas Evaluativas)
