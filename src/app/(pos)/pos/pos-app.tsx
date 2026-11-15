@@ -14,6 +14,7 @@ import { CartView, DiscountModal, groupProducts, lineAmounts, Modal, norm, Payme
 import { AbonoModal, CustomerModal, type PosCustomer } from "./pos-customer";
 import { ReturnModal } from "./pos-return";
 import { PosCashMovementModal } from "./pos-cash-movement";
+import { BASE_PATH, withBase } from "@/lib/base-path";
 
 export type PosRegister = { id: string; code: string; name: string; session: { id: string; openedAt: string; openedByName: string | null } | null };
 
@@ -35,6 +36,7 @@ export function PosApp({ initial }: { initial: PosInitial }) {
   const [online, setOnline] = useState(true);
   const [catalog, setCatalog] = useState<PosCatalog | null>(null);
   const [catalogSource, setCatalogSource] = useState<"network" | "local" | null>(null);
+  const [catalogFailed, setCatalogFailed] = useState(false);
   const [registers, setRegisters] = useState(initial.registers);
   const [registerId, setRegisterId] = useState<string | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
@@ -86,12 +88,13 @@ export function PosApp({ initial }: { initial: PosInitial }) {
 
   const loadCatalog = useCallback(async () => {
     try {
-      const res = await fetch(`/api/v1/pos/catalog?branchId=${initial.branch.id}`, { credentials: "same-origin" });
+      const res = await fetch(withBase(`/api/v1/pos/catalog?branchId=${initial.branch.id}`), { credentials: "same-origin" });
       const json = await res.json();
       if (!json.ok) throw new Error(json.error);
       await localDb.saveCatalog(json.data);
       setCatalog(json.data);
       setCatalogSource("network");
+      setCatalogFailed(false);
       return json.data as PosCatalog;
     } catch {
       const local = await localDb.getCatalog(initial.branch.id);
@@ -100,49 +103,14 @@ export function PosApp({ initial }: { initial: PosInitial }) {
         setCatalogSource("local");
         return local;
       }
-      const fallback: PosCatalog = {
-        branchId: initial.branch.id,
-        warehouseId: "00000000-0000-0000-0000-000000000008",
-        generatedAt: new Date().toISOString(),
-        currency: initial.company.currency || "MXN",
-        timezone: initial.company.timezone || "America/Mexico_City",
-        allowStacking: true,
-        promotions: [],
-        exhaustedPromotionIds: [],
-        priceLists: [],
-        categories: [
-          { id: "c1", name: "Abarrotes Básicos", color: "#10b981" },
-          { id: "c2", name: "Bebidas y Refrescos", color: "#3b82f6" },
-          { id: "c3", name: "Lácteos y Quesos", color: "#f59e0b" },
-          { id: "c4", name: "Galletas y Panecillos", color: "#8b5cf6" },
-          { id: "c5", name: "Botanas y Frituras", color: "#ec4899" },
-          { id: "c6", name: "Salchichonería", color: "#ef4444" },
-        ],
-        paymentMethods: [
-          { id: "00000000-0000-0000-0000-000000000030", code: "EFECTIVO", name: "Efectivo", kind: "cash", requiresReference: false, allowsChange: true },
-          { id: "00000000-0000-0000-0000-000000000031", code: "TDD", name: "Tarjeta de Débito", kind: "card_debit", requiresReference: true, allowsChange: false },
-          { id: "00000000-0000-0000-0000-000000000032", code: "TDC", name: "Tarjeta de Crédito", kind: "card_credit", requiresReference: true, allowsChange: false },
-          { id: "00000000-0000-0000-0000-000000000033", code: "TRANSF", name: "Transferencia SPEI", kind: "transfer", requiresReference: true, allowsChange: false },
-        ],
-        items: [
-          { variantId: "00000000-0000-0000-0000-000000000101", productId: "00000000-0000-0000-0000-000000000201", sku: "ART-CHOKIS", name: "Galletas Chokis 120g", variantName: "120g", price: 2200, taxRate: 0.16, taxIncluded: true, barcodes: ["7501000111111", "ART-CHOKIS"], categoryId: "c4", isFavorite: true, trackStock: true, unitCode: "PZA", allowsDecimals: false, stock: 48 },
-          { variantId: "00000000-0000-0000-0000-000000000102", productId: "00000000-0000-0000-0000-000000000202", sku: "ART-COCA600", name: "Coca Cola Original 600ml", variantName: "600ml", price: 1900, taxRate: 0.16, taxIncluded: true, barcodes: ["7501055300078", "ART-COCA600"], categoryId: "c2", isFavorite: true, trackStock: true, unitCode: "PZA", allowsDecimals: false, stock: 96 },
-          { variantId: "00000000-0000-0000-0000-000000000103", productId: "00000000-0000-0000-0000-000000000203", sku: "ART-ALPURA1L", name: "Leche Entera Alpura 1L", variantName: "1L", price: 2850, taxRate: 0.00, taxIncluded: true, barcodes: ["7501055301234", "ART-ALPURA1L"], categoryId: "c3", isFavorite: false, trackStock: true, unitCode: "PZA", allowsDecimals: false, stock: 30 },
-          { variantId: "00000000-0000-0000-0000-000000000104", productId: "00000000-0000-0000-0000-000000000204", sku: "ART-HUEVO18", name: "Huevo Blanco Calvario 18 pzas", variantName: "Cono 18 pzas", price: 5400, taxRate: 0.00, taxIncluded: true, barcodes: ["7501055304321", "ART-HUEVO18"], categoryId: "c1", isFavorite: true, trackStock: true, unitCode: "PZA", allowsDecimals: false, stock: 25 },
-          { variantId: "00000000-0000-0000-0000-000000000105", productId: "00000000-0000-0000-0000-000000000205", sku: "ART-NUTRIOLI", name: "Aceite Nutrioli Soya 850ml", variantName: "850ml", price: 4500, taxRate: 0.00, taxIncluded: true, barcodes: ["7501055309999", "ART-NUTRIOLI"], categoryId: "c1", isFavorite: false, trackStock: true, unitCode: "PZA", allowsDecimals: false, stock: 40 },
-          { variantId: "00000000-0000-0000-0000-000000000106", productId: "00000000-0000-0000-0000-000000000206", sku: "ART-SABRITAS", name: "Papas Sabritas Sal 45g", variantName: "45g", price: 1800, taxRate: 0.16, taxIncluded: true, barcodes: ["7501011122233", "ART-SABRITAS"], categoryId: "c5", isFavorite: true, trackStock: true, unitCode: "PZA", allowsDecimals: false, stock: 65 },
-          { variantId: "00000000-0000-0000-0000-000000000107", productId: "00000000-0000-0000-0000-000000000207", sku: "ART-JAMONFUD", name: "Jamón de Pavo Virginia FUD", variantName: "A granel (kg)", price: 14000, taxRate: 0.16, taxIncluded: true, barcodes: ["7501055307777", "ART-JAMONFUD"], categoryId: "c6", isFavorite: false, trackStock: true, unitCode: "KG", allowsDecimals: true, stock: 12.5 },
-        ],
-      };
-      setCatalog(fallback);
-      setCatalogSource("local");
-      return fallback;
+      setCatalogFailed(true);
+      return null;
     }
-  }, [initial.branch.id, initial.company.currency, initial.company.timezone]);
+  }, [initial.branch.id]);
 
   const refreshRegisters = useCallback(async () => {
     try {
-      const res = await fetch(`/api/v1/pos/registers?branchId=${initial.branch.id}`, { credentials: "same-origin" });
+      const res = await fetch(withBase(`/api/v1/pos/registers?branchId=${initial.branch.id}`), { credentials: "same-origin" });
       const json = await res.json();
       if (json.ok) {
         setRegisters(json.data);
@@ -204,10 +172,10 @@ export function PosApp({ initial }: { initial: PosInitial }) {
 
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
-        .register("/sw.js")
+        .register(withBase("/sw.js"), { scope: `${BASE_PATH}/` })
         .then(() => navigator.serviceWorker.ready)
         .then((reg) => {
-          const urls = ["/pos", ...performance.getEntriesByType("resource").map((e) => e.name)];
+          const urls = [withBase("/pos"), ...performance.getEntriesByType("resource").map((e) => e.name)];
           reg.active?.postMessage({ type: "precache", urls });
         })
         .catch(() => {});
@@ -476,7 +444,7 @@ export function PosApp({ initial }: { initial: PosInitial }) {
       const timer = setTimeout(() => ctrl.abort(), 10_000);
       let res: Response;
       try {
-        res = await fetch("/api/v1/pos/sales", { method: "POST", headers: CLIENT_HEADERS, body: JSON.stringify(payload), signal: ctrl.signal, credentials: "same-origin" });
+        res = await fetch(withBase("/api/v1/pos/sales"), { method: "POST", headers: CLIENT_HEADERS, body: JSON.stringify(payload), signal: ctrl.signal, credentials: "same-origin" });
       } catch {
         // La red falló (o tardó): se guarda localmente. Si el servidor sí la recibió, la sincronización la reconoce como duplicada.
         clearTimeout(timer);
@@ -604,7 +572,12 @@ export function PosApp({ initial }: { initial: PosInitial }) {
 
       {!catalog && (
         <div className="m-4 rounded-app border border-warning/50 bg-warning/10 p-4 text-sm">
-          {online ? "Cargando catálogo…" : "Sin conexión y sin catálogo guardado en este dispositivo. Abre el punto de venta con internet al menos una vez."}
+          {online && catalogFailed ? (
+            <span className="flex flex-wrap items-center gap-3">
+              No se pudo cargar el catálogo del servidor. Reintenta; si persiste, avisa al administrador.
+              <button type="button" className="rounded-app border border-border px-3 py-1" onClick={() => { setCatalogFailed(false); void loadCatalog(); }}>Reintentar</button>
+            </span>
+          ) : online ? "Cargando catálogo…" : "Sin conexión y sin catálogo guardado en este dispositivo. Abre el punto de venta con internet al menos una vez."}
         </div>
       )}
 
@@ -988,7 +961,7 @@ function CouponModal({ onValid, onClose }: { onValid: (c: { code: string; promot
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch(`/api/v1/coupons?code=${encodeURIComponent(code.trim())}`, { credentials: "same-origin" });
+      const res = await fetch(withBase(`/api/v1/coupons?code=${encodeURIComponent(code.trim())}`), { credentials: "same-origin" });
       const json = await res.json();
       if (!json.ok) throw new Error(json.error);
       onValid({ code: json.data.code, promotionId: json.data.promotionId, promotionName: json.data.promotionName });

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { Modal } from "./pos-parts";
+import { withBase } from "@/lib/base-path";
 
 export type CashMovementProps = {
   sessionId: string;
@@ -40,7 +41,7 @@ export function PosCashMovementModal({ sessionId, currency, onClose, onSuccess }
     setError(null);
 
     try {
-      const res = await fetch("/api/v1/pos/cash-movement", {
+      const res = await fetch(withBase("/api/v1/pos/cash-movement"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

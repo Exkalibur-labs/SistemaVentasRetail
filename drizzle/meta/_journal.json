@@ -50,6 +50,13 @@
       "when": 1793112693745,
       "tag": "0006_fase4d_promociones_precios",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794713300445,
+      "tag": "0007_fase5b_facturacion_simulada",
+      "breakpoints": true
     }
   ]
 }

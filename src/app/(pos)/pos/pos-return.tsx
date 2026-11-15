@@ -7,6 +7,7 @@ import { uuidv7 } from "@/lib/pos/local-db";
 import { CLIENT_HEADERS } from "@/lib/pos/sync";
 import type { PosItem } from "@/server/modules/pos/catalog";
 import { Modal, norm } from "./pos-parts";
+import { withBase } from "@/lib/base-path";
 
 type ReturnableSale = {
   sale: { id: string; folio: string; soldAt: string; total: number; customerId: string | null; customerName: string | null };
@@ -81,7 +82,7 @@ export function ReturnModal({
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch(`/api/v1/returns/sale?folio=${encodeURIComponent(folio.trim())}`, { credentials: "same-origin" });
+      const res = await fetch(withBase(`/api/v1/returns/sale?folio=${encodeURIComponent(folio.trim())}`), { credentials: "same-origin" });
       const json = await res.json();
       if (!json.ok) throw new Error(json.error);
       const s = json.data as ReturnableSale;
@@ -145,7 +146,7 @@ export function ReturnModal({
       ...(needsAuth ? { authorization: { username: authUser, password: authPass } } : {}),
     };
     try {
-      const res = await fetch("/api/v1/returns", { method: "POST", headers: CLIENT_HEADERS, credentials: "same-origin", body: JSON.stringify(body) });
+      const res = await fetch(withBase("/api/v1/returns"), { method: "POST", headers: CLIENT_HEADERS, credentials: "same-origin", body: JSON.stringify(body) });
       const json = await res.json();
       if (!json.ok) {
         if (json.code === "return_authorization_required") setForceAuth(true);

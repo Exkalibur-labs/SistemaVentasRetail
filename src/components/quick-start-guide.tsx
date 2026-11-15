@@ -61,7 +61,7 @@ const STEPS: Step[] = [
     title: "3. Carga tus Productos y Códigos de Barras",
     shortDesc: "Precios, categorías y escaneo ágil con pistola Znemaz.",
     detail:
-      "El sistema incluye abarrotes de alta rotación listos para usar (Chokis, Coca-Cola, Leche, Huevo, etc.). Puedes dar de alta nuevos productos por pieza o granel (kg), asignarles precio de venta, costo promedio y códigos de barras usando tu lector inalámbrico Znemaz 1D/2D.",
+      "Si este entorno se cargó con datos de ejemplo, verás productos de muestra. Puedes dar de alta nuevos productos por pieza o granel (kg), asignarles precio de venta, costo promedio y códigos de barras usando tu lector inalámbrico Znemaz 1D/2D.",
     href: "/inventario/escaner",
     actionText: "Escanear y Cargar Productos",
     icon: Barcode,
@@ -82,14 +82,14 @@ const STEPS: Step[] = [
   {
     id: "step_invoicing",
     number: 5,
-    title: "5. Facturación Electrónica CFDI 4.0",
-    shortDesc: "Configura tus datos de emisor SAT y emite comprobantes oficiales.",
+    title: "5. Facturación (modo simulación)",
+    shortDesc: "Configura tus datos de emisor y practica la emisión de comprobantes.",
     detail:
-      "Carga tus datos fiscales como Emisor (RFC, Razón Social, Régimen fiscal como RESICO 626 o Actividad Empresarial 612 y Código Postal). Una vez confirmado, podrás convertir cualquier venta en factura timbrada con código QR oficial del SAT y XML descargable.",
+      "Carga tus datos fiscales como Emisor (RFC, Razón Social, Régimen fiscal como RESICO 626 o Actividad Empresarial 612 y Código Postal). Una vez confirmado, podrás convertir una venta en un comprobante simulado con QR y XML descargable. Aún no se timbra ante el SAT: no tiene validez fiscal.",
     href: "/facturacion",
     actionText: "Configurar Emisor y Facturar",
     icon: ReceiptText,
-    tip: "Fiscal: Cuenta con conexión PAC en modo pruebas (sandbox) para que puedas practicar sin impacto contable.",
+    tip: "Fiscal: el timbrado real con un PAC autorizado aún no está conectado; lo emitido aquí es solo de práctica.",
   },
 ];
 

@@ -2,7 +2,7 @@
 
 Plataforma SaaS de gestión comercial para negocios retail: punto de venta, inventario, clientes, promociones y analítica, multiempresa y preparada para operar sin internet. Producto de Exkalibur Consulting (nombre comercial pendiente).
 
-**Estado: Fase 4 completa — operación comercial (compras, clientes y crédito, devoluciones, promociones). Siguiente: Fase 5 (reportes, facturación, pedidos, lealtad).**
+**Estado: Fase 5A completa (reportes) y facturación en modo simulación sin validez fiscal. Demo publicable bajo `/caja` (ver `docs/25-demo-segura-y-publicacion-bajo-caja.md`). Siguiente: Fase 5 (facturación con PAC, pedidos, lealtad).**
 
 - **Fase 2 (base):** autenticación, cuentas (tenants), empresas, sucursales, almacenes, cajas, usuarios, roles y permisos, módulos activables, configuración y bitácora.
 - **Fase 3 (vender):** catálogo con variantes y códigos de barras, inventario con libro inmutable y costo promedio, caja con cortes X y Z, punto de venta táctil con ticket de 80 mm, venta **sin internet** con sincronización sin duplicados, app instalable (PWA).
@@ -57,7 +57,11 @@ Resultado esperado: en `http://localhost:3000/login` puedes entrar con las crede
 
 Las semillas cargan además un catálogo demo (bebidas, botanas, abarrotes, granel y una playera con tallas y colores) con existencias en «Sucursal Centro», y tres proveedores ligados a esos productos (Distribuidora del Golfo, Abarrotes Mayoreo Xalapa, Textiles del Centro) con los módulos de compras, devoluciones, promociones y crédito activos, y cuatro clientes (dos con crédito) en los grupos Mayoreo y Empleados. Para vender: entra como `cajero`, abre la caja en **Caja** y ve a **Punto de venta**; prueba escanear `7500000000011`. Para comprar: entra como `gerente` → **Compras** → **Sugerencias** o **Nueva orden**. Para fiar: en el POS agrega a «Tienda La Esquina» (crédito de $2,000) y cobra con «Crédito del cliente»; como `cajero` te pedirá autorización (`gerente`). Promociones demo: 3x2 en galletas, jugo a $28 entre semana de 7 a 11 h, cupón `BIENVENIDA10` y lista Mayoreo (arroz y frijol) para el grupo Mayoreo.
 
-Estas contraseñas son públicas (el repositorio es público). **Nunca siembres un entorno real con ellas:** define `SEED_*_PASSWORD` propias antes de `npm run db:seed`.
+Estas contraseñas son públicas (el repositorio es público). **Nunca siembres un entorno real ni una demo con ellas:** define `SEED_*_PASSWORD` propias antes de `npm run db:seed`.
+
+### Publicar bajo un subdirectorio (p. ej. `exkalibur.mx/caja`)
+
+Compila con `NEXT_PUBLIC_BASE_PATH=/caja` (sin barra final) y define `APP_PUBLIC_ORIGIN` y `SERVER_ACTIONS_ALLOWED_ORIGINS` con el dominio público. El sitio que publica el dominio debe reescribir `/caja` y `/caja/:path*` hacia esta app. Detalle y lista de variables en `docs/25-demo-segura-y-publicacion-bajo-caja.md`.
 
 ## Scripts
 

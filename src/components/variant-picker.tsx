@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Search } from "lucide-react";
 import { formatCents } from "@/lib/money";
+import { withBase } from "@/lib/base-path";
 
 export type PickedVariant = { id: string; productId?: string; sku: string; name: string; variantName: string; price: number; trackStock: boolean };
 
@@ -24,7 +25,7 @@ export function VariantPicker({ value, onChange, currency = "MXN", autoFocus }: 
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`/api/v1/catalog/variants?q=${encodeURIComponent(q.trim())}`);
+        const res = await fetch(withBase(`/api/v1/catalog/variants?q=${encodeURIComponent(q.trim())}`));
         const json = await res.json();
         if (!json.ok) throw new Error(json.error);
         setResults(json.data);

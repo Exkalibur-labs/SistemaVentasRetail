@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { formatCents } from "@/lib/money";
+import { withBase } from "@/lib/base-path";
 
 function formatDateString(val: Date | string) {
   try {
@@ -164,7 +165,7 @@ export function InvoicingClientView({
         };
       }
 
-      const res = await fetch("/api/v1/invoicing", {
+      const res = await fetch(withBase("/api/v1/invoicing"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -195,7 +196,7 @@ export function InvoicingClientView({
 
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/invoicing", {
+      const res = await fetch(withBase("/api/v1/invoicing"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "cancel", invoiceId, reason }),
@@ -220,7 +221,7 @@ export function InvoicingClientView({
 
   const handleDownloadXml = async (id: string, folio: string) => {
     try {
-      const res = await fetch(`/api/v1/invoicing?id=${id}`);
+      const res = await fetch(withBase(`/api/v1/invoicing?id=${id}`));
       const data = await res.json();
       if (data.ok && data.invoice?.xmlContent) {
         const blob = new Blob([data.invoice.xmlContent], { type: "application/xml" });
@@ -238,11 +239,14 @@ export function InvoicingClientView({
 
   return (
     <div className="space-y-5">
+      <div role="status" className="rounded-2xl border border-warning/40 bg-warning/10 p-4 text-sm text-fg" data-testid="cfdi-simulation-banner">
+        <strong>Modo de simulación: sin validez fiscal.</strong> Estos comprobantes no se envían a un PAC ni al SAT; el UUID, el sello y el QR son de práctica. El timbrado real se activará al conectar un proveedor autorizado.
+      </div>
       {/* Barra superior de acciones */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-app bg-card p-4 shadow-sm">
         <div>
           <h2 className="text-lg font-bold text-fg">Comprobantes Fiscales Digitales (CFDI 4.0)</h2>
-          <p className="text-xs text-muted">Emisión y timbrado de facturas para ventas de mostrador y mayoreo.</p>
+          <p className="text-xs text-muted">Genera comprobantes de ventas de mostrador y mayoreo en modo de simulación.</p>
         </div>
         <button
           type="button"
@@ -254,7 +258,7 @@ export function InvoicingClientView({
             }
             setShowIssueModal(true);
           }}
-          title={!issuer.confirmed ? "Configura primero los datos de emisor abajo" : "Emitir factura CFDI 4.0"}
+          title={!issuer.confirmed ? "Configura primero los datos de emisor abajo" : "Emitir factura simulada (sin validez fiscal)"}
           className={`h-11 rounded-xl px-5 text-sm font-bold shadow transition ${
             issuer.confirmed
               ? "bg-primary text-primary-fg hover:opacity-95 cursor-pointer"
@@ -384,7 +388,7 @@ export function InvoicingClientView({
           <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
             <div className="flex items-center gap-2 text-xs text-muted">
               <span className="size-2 rounded-full bg-success animate-pulse" />
-              <span>Conexión con PAC Sandbox SW Sapien activa para timbrado en línea.</span>
+              <span>Modo simulación: no hay conexión con un PAC; los comprobantes no tienen validez fiscal.</span>
             </div>
             <button
               type="submit"
@@ -650,7 +654,7 @@ export function InvoicingClientView({
                   disabled={loading || !selectedSaleId}
                   className="h-11 rounded-xl bg-primary px-6 text-sm font-bold text-primary-fg shadow transition hover:opacity-95 disabled:opacity-50"
                 >
-                  {loading ? "Timbrando ante SAT..." : "Timbrar CFDI"}
+                  {loading ? "Generando comprobante…" : "Emitir factura simulada"}
                 </button>
               </div>
             </form>

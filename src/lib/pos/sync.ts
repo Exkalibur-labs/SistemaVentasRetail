@@ -4,6 +4,7 @@
  * reconoce cada venta por su UUID y nunca la duplica.
  */
 import { localDb, type OutboxSale } from "./local-db";
+import { withBase } from "@/lib/base-path";
 
 export const CLIENT_HEADERS = { "Content-Type": "application/json", "x-sc-client": "pos" };
 
@@ -36,7 +37,7 @@ async function doSync(userId: string, { batchSize = 20, timeoutMs = 15000 }: { b
     try {
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-      const res = await fetch("/api/v1/sync", {
+      const res = await fetch(withBase("/api/v1/sync"), {
         method: "POST",
         headers: CLIENT_HEADERS,
         body: JSON.stringify({ deviceId, sales: batch.map((b) => b.payload) }),

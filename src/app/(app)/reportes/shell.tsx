@@ -8,6 +8,7 @@ import { REPORTS, type ReportKey } from "@/server/modules/reports/tables";
 import type { ReportDocument, ReportTable } from "@/server/modules/reports/export";
 import { PERIOD_PRESETS } from "@/lib/period";
 import { formatCents, formatQty } from "@/lib/money";
+import { withBase } from "@/lib/base-path";
 
 export type ReportParams = { periodo?: string; desde?: string; hasta?: string; sucursal?: string };
 
@@ -31,7 +32,7 @@ export function ReportShell({ ctx, f, params, active, children }: { ctx: Request
           canExport && (
             <div className="flex flex-wrap gap-2 print:hidden" aria-label="Exportar">
               {(["xlsx", "csv", "pdf"] as const).map((fmt) => (
-                <a key={fmt} download className="inline-flex min-h-11 items-center rounded-app border border-border px-4 text-sm font-medium hover:bg-surface-2" href={`/api/v1/reports/export${qs(keep, { reporte: active, formato: fmt })}`} data-testid={`export-${fmt}`}>
+                <a key={fmt} download className="inline-flex min-h-11 items-center rounded-app border border-border px-4 text-sm font-medium hover:bg-surface-2" href={withBase(`/api/v1/reports/export${qs(keep, { reporte: active, formato: fmt })}`)} data-testid={`export-${fmt}`}>
                   {fmt === "xlsx" ? "Excel" : fmt.toUpperCase()}
                 </a>
               ))}

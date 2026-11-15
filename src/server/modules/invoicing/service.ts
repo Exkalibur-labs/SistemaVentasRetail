@@ -37,61 +37,14 @@ export async function issueInvoiceFromSale(
   if (!ctx.company) throw new NotFoundError("La empresa");
   const company = ctx.company;
 
-  let sale: typeof sales.$inferSelect;
-  let lines: (typeof saleLines.$inferSelect)[] = [];
-
-  try {
-    const [row] = await db
-      .select()
-      .from(sales)
-      .where(and(eq(sales.id, input.saleId), eq(sales.companyId, company.id)))
-      .limit(1);
-
-    if (row) {
-      if (row.status === "cancelled") {
-        throw new ConflictError("No se puede facturar una venta cancelada.");
-      }
-      sale = row;
-      lines = await db
-        .select()
-        .from(saleLines)
-        .where(eq(saleLines.saleId, sale.id))
-        .orderBy(saleLines.lineNo);
-    } else {
-      throw new NotFoundError("Venta no encontrada.");
-    }
-  } catch (err) {
-    if (err instanceof ConflictError || err instanceof NotFoundError) throw err;
-    sale = {
-      id: input.saleId,
-      companyId: company.id,
-      branchId: ctx.branch?.id || "00000000-0000-0000-0000-000000000005",
-      folio: "V-000104",
-      subtotal: 128017,
-      discountTotal: 0,
-      taxTotal: 20483,
-      total: 148500,
-      currency: company.currency || "MXN",
-      status: "completed",
-      customerId: null,
-      customerName: "Público en general",
-    } as unknown as typeof sales.$inferSelect;
-    lines = [
-      {
-        id: "l1",
-        saleId: input.saleId,
-        lineNo: 1,
-        sku: "ART-CHOKIS",
-        description: "Galletas Chokis 120g",
-        quantity: 2,
-        unitPrice: 2200,
-        discountAmount: 0,
-        netAmount: 3793,
-        taxAmount: 607,
-        lineTotal: 4400,
-      } as unknown as typeof saleLines.$inferSelect,
-    ];
-  }
+  const [sale] = await db
+    .select()
+    .from(sales)
+    .where(and(eq(sales.id, input.saleId), eq(sales.companyId, company.id)))
+    .limit(1);
+  if (!sale) throw new NotFoundError("Venta no encontrada.");
+  if (sale.status === "cancelled") throw new ConflictError("No se puede facturar una venta cancelada.");
+  const lines = await db.select().from(saleLines).where(eq(saleLines.saleId, sale.id)).orderBy(saleLines.lineNo);
 
   // Datos del emisor
   const issuerRfc = (input.issuer?.rfc || company.taxId || "XAXX010101000").toUpperCase();
@@ -105,40 +58,27 @@ export async function issueInvoiceFromSale(
   if (input.receiver && input.receiver.rfc) {
     receiver = input.receiver;
   } else if (sale.customerId) {
-    try {
-      const [c] = await db.select().from(customers).where(eq(customers.id, sale.customerId)).limit(1);
-      if (c?.taxId && c?.legalName && c?.taxPostalCode) {
-        receiver = {
-          rfc: c.taxId,
-          name: c.legalName,
-          regime: c.taxRegime || "616",
-          postalCode: c.taxPostalCode,
-          cfdiUse: c.cfdiUse || "G03",
-          paymentMethod: "PUE",
-          paymentForm: "01",
-        };
-      } else {
-        receiver = {
-          rfc: "XAXX010101000",
-          name: "PÚBLICO EN GENERAL",
-          regime: "616",
-          postalCode: issuerPostalCode,
-          cfdiUse: "S01",
-          paymentMethod: "PUE",
-          paymentForm: "01",
-        };
-      }
-    } catch {
-      receiver = {
-        rfc: "XAXX010101000",
-        name: "PÚBLICO EN GENERAL",
-        regime: "616",
-        postalCode: issuerPostalCode,
-        cfdiUse: "S01",
-        paymentMethod: "PUE",
-        paymentForm: "01",
-      };
-    }
+    const [c] = await db.select().from(customers).where(eq(customers.id, sale.customerId)).limit(1);
+    receiver =
+      c?.taxId && c?.legalName && c?.taxPostalCode
+        ? {
+            rfc: c.taxId,
+            name: c.legalName,
+            regime: c.taxRegime || "616",
+            postalCode: c.taxPostalCode,
+            cfdiUse: c.cfdiUse || "G03",
+            paymentMethod: "PUE",
+            paymentForm: "01",
+          }
+        : {
+            rfc: "XAXX010101000",
+            name: "PÚBLICO EN GENERAL",
+            regime: "616",
+            postalCode: issuerPostalCode,
+            cfdiUse: "S01",
+            paymentMethod: "PUE",
+            paymentForm: "01",
+          };
   } else {
     receiver = {
       rfc: "XAXX010101000",
@@ -151,34 +91,19 @@ export async function issueInvoiceFromSale(
     };
   }
 
-  // Generar folio fiscal consecutivo
-  let folio = `F-${Math.floor(100000 + Math.random() * 900000)}`;
-  let seqSeries = "F";
-  let seqNumber = 101;
-  try {
-    const seq = await nextFolio(db, {
-      tenantId: ctx.tenantId,
-      companyId: company.id,
-      branchId: sale.branchId,
-      documentType: "invoice",
-    });
-    folio = seq.folio;
-    seqSeries = seq.series;
-    seqNumber = seq.number;
-  } catch {}
-
   // Generar UUID fiscal SAT v4
   const fiscalUuid = randomUUID();
   const totalFormatted = (sale.total / 100).toFixed(2);
-  const digitalStamp = Buffer.from(`${fiscalUuid}|${issuerRfc}|${receiver.rfc}|${totalFormatted}`).toString("base64");
-  const satSeal = Buffer.from(`SAT-${fiscalUuid}-${Date.now()}`).toString("base64");
-  const satCertificateNumber = "30001000000500003416";
+  const digitalStamp = "SIMULADO:" + Buffer.from(`${fiscalUuid}|${issuerRfc}|${receiver.rfc}|${totalFormatted}`).toString("base64");
+  const satSeal = "SIMULADO:" + Buffer.from(`SAT-${fiscalUuid}-${Date.now()}`).toString("base64");
+  const satCertificateNumber = "SIMULADO";
 
-  // Cadena URL SAT para código QR
-  const qrData = `https://verificacfdi.facturaelectronica.sat.gob.mx/default.aspx?id=${fiscalUuid}&re=${issuerRfc}&rr=${receiver.rfc}&tt=${totalFormatted}&fe=${digitalStamp.slice(-8)}`;
+  // Sin PAC no hay timbre válido: el QR no apunta al SAT para que nadie lo tome por verificable.
+  const qrData = `SIMULACION-SIN-VALIDEZ-FISCAL|UUID=${fiscalUuid}|RE=${issuerRfc}|RR=${receiver.rfc}|TT=${totalFormatted}`;
 
   // Estructura XML CFDI 4.0
-  const xmlContent = `<?xml version="1.0" encoding="utf-8"?>
+  const buildXml = (seqSeries: string, seqNumber: number) => `<?xml version="1.0" encoding="utf-8"?>
+<!-- SIMULACIÓN: documento sin validez fiscal. No fue timbrado por un PAC autorizado por el SAT. -->
 <cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4" Version="4.0" Serie="${seqSeries}" Folio="${seqNumber}" Fecha="${new Date().toISOString()}" Sello="${digitalStamp}" FormaPago="${receiver.paymentForm || "01"}" NoCertificado="${satCertificateNumber}" SubTotal="${(sale.subtotal / 100).toFixed(2)}" Descuento="${(sale.discountTotal / 100).toFixed(2)}" Moneda="${sale.currency}" Total="${totalFormatted}" TipoDeComprobante="I" Exportacion="01" MetodoPago="${receiver.paymentMethod || "PUE"}" LugarExpedicion="${issuerPostalCode}">
   <cfdi:Emisor Rfc="${issuerRfc}" Nombre="${issuerName}" RegimenFiscal="${issuerRegime}"/>
   <cfdi:Receptor Rfc="${receiver.rfc}" Nombre="${receiver.name}" DomicilioFiscalReceptor="${receiver.postalCode}" RegimenFiscalReceptor="${receiver.regime}" UsoCFDI="${receiver.cfdiUse}"/>
@@ -201,21 +126,26 @@ ${lines
     </cfdi:Traslados>
   </cfdi:Impuestos>
   <cfdi:Complemento>
-    <tfd:TimbreFiscalDigital xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" Version="1.1" UUID="${fiscalUuid}" FechaTimbrado="${new Date().toISOString()}" RfcProvCertif="SFE0807172W8" SelloCFD="${digitalStamp}" NoCertificadoSAT="${satCertificateNumber}" SelloSAT="${satSeal}"/>
+    <tfd:TimbreFiscalDigital xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" Version="1.1" UUID="${fiscalUuid}" FechaTimbrado="${new Date().toISOString()}" RfcProvCertif="SIMULADO" SelloCFD="${digitalStamp}" NoCertificadoSAT="${satCertificateNumber}" SelloSAT="${satSeal}"/>
   </cfdi:Complemento>
 </cfdi:Comprobante>`;
 
-  // Insertar en base de datos
-  let createdInvoice: typeof invoices.$inferSelect;
-  try {
-    const [row] = await db
+  // Folio, factura y bitácora en una sola transacción: si algo falla, no queda nada a medias.
+  return db.transaction(async (tx) => {
+    const seq = await nextFolio(tx, {
+      tenantId: ctx.tenantId,
+      companyId: company.id,
+      branchId: sale.branchId,
+      documentType: "invoice",
+    });
+    const [createdInvoice] = await tx
       .insert(invoices)
       .values({
         tenantId: ctx.tenantId,
         companyId: company.id,
         branchId: sale.branchId,
         saleId: sale.id,
-        folio,
+        folio: seq.folio,
         fiscalUuid,
         issuerRfc,
         issuerName,
@@ -233,7 +163,7 @@ ${lines
         paymentMethod: receiver.paymentMethod || "PUE",
         paymentForm: receiver.paymentForm || "01",
         status: "issued",
-        xmlContent,
+        xmlContent: buildXml(seq.series, seq.number),
         qrData,
         digitalStamp,
         satSeal,
@@ -241,62 +171,22 @@ ${lines
         createdBy: ctx.userId,
       })
       .returning();
-    createdInvoice = row;
-  } catch {
-    createdInvoice = {
-      id: `inv-${Date.now()}`,
-      tenantId: ctx.tenantId,
-      companyId: company.id,
-      branchId: sale.branchId,
-      saleId: sale.id,
-      folio,
-      fiscalUuid,
-      issuerRfc,
-      issuerName,
-      issuerRegime,
-      receiverRfc: receiver.rfc.toUpperCase(),
-      receiverName: receiver.name.toUpperCase(),
-      receiverRegime: receiver.regime,
-      receiverPostalCode: receiver.postalCode,
-      cfdiUse: receiver.cfdiUse,
-      subtotal: sale.subtotal,
-      discountTotal: sale.discountTotal,
-      taxTotal: sale.taxTotal,
-      total: sale.total,
-      currency: sale.currency,
-      paymentMethod: receiver.paymentMethod || "PUE",
-      paymentForm: receiver.paymentForm || "01",
-      status: "issued",
-      cancelReason: null,
-      cancelledAt: null,
-      xmlContent,
-      qrData,
-      digitalStamp,
-      satSeal,
-      satCertificateNumber,
-      issuedAt: new Date(),
-      createdAt: new Date(),
-      createdBy: ctx.userId,
-    };
-  }
-
-  try {
-    await recordAudit(db, ctx.actor, {
+    await recordAudit(tx, ctx.actor, {
       action: "invoicing.issue",
       entity: "invoice",
       entityId: createdInvoice.id,
       companyId: company.id,
       after: {
-        folio,
+        folio: seq.folio,
         fiscalUuid,
+        simulated: true,
         saleFolio: sale.folio,
         total: sale.total,
         receiverRfc: receiver.rfc,
       },
     });
-  } catch {}
-
-  return createdInvoice;
+    return createdInvoice;
+  });
 }
 
 export async function listInvoices(

@@ -15,15 +15,9 @@ export default async function InventoryScannerPage() {
     return <Alert tone="warning">Selecciona una empresa para gestionar inventario.</Alert>;
   }
 
-  let whs: Awaited<ReturnType<typeof listAccessibleWarehouses>> = [];
-  try {
-    whs = await listAccessibleWarehouses(ctx);
-  } catch {
-    whs = [{ id: "wh1", code: "CENTRO-ALM", name: "Almacén Principal", branchId: ctx.branch?.id ?? "b1", branchName: ctx.branch?.name ?? "Sucursal Centro", isDefault: true }];
-  }
-
+  const whs = await listAccessibleWarehouses(ctx);
   if (!whs.length) {
-    whs = [{ id: "wh1", code: "CENTRO-ALM", name: "Almacén Principal", branchId: ctx.branch?.id ?? "b1", branchName: ctx.branch?.name ?? "Sucursal Centro", isDefault: true }];
+    return <Alert tone="warning">No tienes almacenes disponibles. Pide acceso a una sucursal con almacén.</Alert>;
   }
 
   const defaultWh = whs.find((w) => w.branchId === ctx.branch?.id && w.isDefault) ?? whs[0];
