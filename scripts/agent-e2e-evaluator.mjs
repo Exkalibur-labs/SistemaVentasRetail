@@ -12,13 +12,42 @@ import path from "node:path";
 import { execSync } from "node:child_process";
 import { retailFixtures } from "../tests/e2e/fixtures/retail.fixture.mjs";
 
-const EPMS_MCP_URL = "https://exkalibur.mx/api/mcp";
-const EPMS_TOKEN = "epms_7GZQ6KJ-FUbp6fOT-HWt6ogpvlqjmZstZYHNjQ8Bgzo";
+const EPMS_MCP_URL = process.env.EPMS_MCP_URL || "https://exkalibur.mx/api/mcp";
+
+function resolveEpmsToken() {
+  if (process.env.EPMS_TOKEN) {
+    return process.env.EPMS_TOKEN;
+  }
+
+  const vaultPath = path.resolve("..", ".agents", "vault.json");
+  if (fs.existsSync(vaultPath)) {
+    try {
+      const vault = JSON.parse(fs.readFileSync(vaultPath, "utf8"));
+      if (vault?.epms?.token) {
+        return vault.epms.token;
+      }
+    } catch (err) {
+      console.warn(`⚠️ No se pudo leer el Vault local (${vaultPath}): ${err.message}`);
+    }
+  }
+
+  console.warn(
+    "⚠️ EPMS_TOKEN no definido en el entorno y no se encontró ../.agents/vault.json; la telemetría hacia EPMS se omitirá."
+  );
+  return "";
+}
+
+const EPMS_TOKEN = resolveEpmsToken();
 const TASK_ID = process.env.EPMS_TASK_ID || "4215e421-6660-4d62-aba3-3aaeeb2e297d";
 const EVIDENCE_DIR = path.resolve("tests/e2e/evidence");
 fs.mkdirSync(EVIDENCE_DIR, { recursive: true });
 
 async function sendTelemetry(status, action, progress) {
+  if (!EPMS_TOKEN) {
+    console.warn(`⚠️ Telemetría EPMS omitida (${status}): EPMS_TOKEN no disponible.`);
+    return;
+  }
+
   const payload = {
     jsonrpc: "2.0",
     id: 1,

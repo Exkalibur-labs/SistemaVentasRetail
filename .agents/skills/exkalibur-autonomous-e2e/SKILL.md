@@ -108,8 +108,8 @@ El script debe:
 ### Paso 4: Crear el Evaluador EPMS (`scripts/agent-e2e-evaluator.mjs`)
 El script ejecuta la suite y envía telemetría a EPMS vía `POST https://exkalibur.mx/api/mcp` con la herramienta `actualizar_telemetria_agente`:
 ```javascript
-const EPMS_MCP_URL = "https://exkalibur.mx/api/mcp";
-const EPMS_TOKEN = "epms_7GZQ6KJ-FUbp6fOT-HWt6ogpvlqjmZstZYHNjQ8Bgzo";
+const EPMS_MCP_URL = process.env.EPMS_MCP_URL || "https://exkalibur.mx/api/mcp";
+const EPMS_TOKEN = process.env.EPMS_TOKEN || ""; // Cargar desde .agents/vault.env o Secrets de CI
 
 // Si pasa:
 await sendTelemetry("success", `Suite E2E aprobada exitosamente (${specs.length} flujos)`, 100);
@@ -142,3 +142,29 @@ Cuando una prueba E2E falla en CI o durante la ejecución de un agente:
 5. **Verificación Verde:** Corre de nuevo `npm run test:e2e` para garantizar que la prueba pasa al 100%.
 6. **Pull Request Obligatorio:** Crea el PR con GitHub CLI:
    `gh pr create --reviewer joseom0710,janom91 --title "fix(e2e): <descripcion>" --body "<explicacion>"`
+
+---
+
+## 6. Refinamiento Continuo SDD: Matriz de Trazabilidad y Fixtures
+
+Para alcanzar el máximo nivel de madurez en **Spec-Driven Development (SDD)**:
+
+1. **Fixtures Declarativos por Especificación (`tests/e2e/fixtures/*.fixture.mjs`):**
+   - Desacoplar los datos de prueba de la lógica del runner.
+   - Definir de manera declarativa los escenarios para cada `@spec`: IDs, rutas, credenciales demo, montos de apertura y tolerancias de cálculo.
+2. **Etiquetado Explícito `@spec: HU-xxx`:**
+   - Cada bloque de prueba debe declarar explícitamente a qué Historia de Usuario responde.
+3. **Matriz de Trazabilidad Bidireccional (`traceabilityMatrix`):**
+   - El reporte forense JSON (`tests/e2e/evidence/e2e-report.json`) debe incluir la correlación exacta:
+     ```json
+     {
+       "specId": "HU-TAP-001",
+       "specFile": "tests/e2e/specs/01-pos-comandas-mesas.spec.md",
+       "route": "/pos",
+       "status": "PASS",
+       "durationMs": 420
+     }
+     ```
+4. **Métrica de Cobertura Formal SDD (`coverageRate`):**
+   - Cálculo automático: `coverageRate = Math.round((passedSpecs / totalSpecs) * 100)`.
+   - Transmisión en tiempo real a la telemetría de EPMS para visibilidad ejecutiva en dashboard.
