@@ -1,5 +1,8 @@
 # Bitácora Técnica: Tropicalización, Hardware POS, Movimientos de Caja, Inventario Ágil y Facturación CFDI 4.0
 
+> **Nota de corrección (noviembre 2026):** en este documento, la facturación y el «sello PAC» son una **simulación sin validez fiscal** (no hay PAC conectado). Ver `docs/25-demo-segura-y-publicacion-bajo-caja.md`.
+
+
 - **Fecha:** 9 de noviembre de 2026
 - **Autor / Rol:** Lead Worker (`/exkalibur-lead-worker`)
 - **Tarea EPMS:** #144 (`303e3aad-1a61-4963-a155-47202194493d`)

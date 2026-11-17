@@ -1,49 +1,27 @@
-# Bitácora Técnica: Acceso de Demostración para Clientes Potenciales y Prospectos
+# 18. Demo para clientes potenciales y prospectos
 
-- **Fecha:** 9 de noviembre de 2026
-- **Autor / Rol:** Lead Worker (`/exkalibur-lead-worker`)
-- **Tarea EPMS:** #144 (`303e3aad-1a61-4963-a155-47202194493d`)
-- **Organización GitHub:** `Exkalibur-labs/SistemaVentasRetail`
-- **Rama:** `task-144-tropicalizacion-hardware-caja-inventario`
-
----
+- **Estado:** reemplaza la versión del 9 de noviembre de 2026 (usuario `demo_retail` con contraseña publicada y acceso de respaldo sin base de datos). Esa versión se retiró: ver `docs/25-demo-segura-y-publicacion-bajo-caja.md`.
 
 ## 1. Objetivo
 
-Habilitar un usuario y credenciales oficiales de acceso total para demostraciones comerciales, presentaciones a prospectos y clientes potenciales de abarrotes, tiendas de conveniencia y retail.
+Tener un entorno para mostrar el sistema a prospectos de abarrotes, tiendas de conveniencia y retail, sin exponer datos reales ni credenciales públicas.
 
----
+## 2. Cómo se arma la demo
 
-## 2. Credenciales de Acceso
+1. **Base de datos propia de la demo** (Supabase u otro Postgres), separada de cualquier entorno con datos reales.
+2. **Migraciones y semillas** con `npm run db:migrate` y `npm run db:seed`. Las semillas crean la empresa demo, catálogo, existencias, proveedores, clientes y promociones de ejemplo.
+3. **Contraseñas privadas:** define `SEED_SUPERADMIN_PASSWORD`, `SEED_OWNER_PASSWORD`, `SEED_MANAGER_PASSWORD` y `SEED_CASHIER_PASSWORD` en el entorno antes de sembrar. No se escriben en el repositorio, en documentos ni en capturas. Las contraseñas del README son solo para desarrollo local.
+4. **Usuarios de la demo:** `dueno` (acceso a todo el negocio), `gerente` y `cajero` (Sucursal Centro). Se comparten con cada prospecto por un canal privado y se rotan cuando termina la presentación.
+5. **Restablecer datos:** `npm run db:reset` vacía y vuelve a sembrar. Ejecútalo solo contra la base de la demo, nunca contra una base con datos reales.
 
-| Parámetro | Valor |
-| :--- | :--- |
-| **URL de Acceso** | [https://sistema-ventas-retail-exkalibur.vercel.app/login](https://sistema-ventas-retail-exkalibur.vercel.app/login) |
-| **Usuario** | `demo_retail` *(o `demo`)* |
-| **Contraseña** | `Retail2026!` |
-| **Rol Asignado** | **Dueño de Tienda (`owner`)** — Acceso total a todas las funciones |
-| **Empresa Activa** | Abarrotes y Minisúper La Esquina (`DEMO`) |
-| **Sucursal Activa** | Sucursal Centro (Matriz) |
-| **Caja Registradora** | Caja Principal Mostrador |
+## 3. Qué se puede mostrar
 
----
+Punto de venta con lector de códigos y ticket, caja con cortes X y Z, venta sin internet con sincronización, catálogo con variantes y granel, inventario y escáner, compras y cuentas por pagar, clientes y crédito, devoluciones, promociones, reportes con exportación a CSV, Excel y PDF.
 
-## 3. Módulos y Capacidades Habilitadas para la Muestra
+**Facturación:** es una simulación. Genera un comprobante de práctica con XML y QR marcados como SIMULADO; no se envía a un PAC ni al SAT y no tiene validez fiscal. Debe presentarse así a los prospectos.
 
-El usuario cuenta con acceso sin restricciones a:
-1. **Punto de Venta Mostrador (`/pos`):** Venta rápida con teclado, lector de códigos de barras Znemaz 1D/2D, cobro en efectivo, tarjeta y crédito, impresión de ticket en bobina SUZWIP 58 mm y 80 mm.
-2. **Control de Caja Rápido:** Modal directo de entradas y salidas de mostrador para gastos menores o morralla.
-3. **Inventario Ágil (`/inventario/escaner`):** Entrada rápida con pistola de códigos, botones táctiles `+1, +5, +10, +24` y alta express en 3 campos.
-4. **Facturación Electrónica CFDI 4.0 (`/facturacion`):** Timbrado sandbox, código QR de validación fiscal SAT y descarga de XML.
-5. **Catálogo y Productos (`/catalogo`):** Artículos por pieza, granel (báscula), variantes de atributos y listas de precios.
-6. **Clientes y Crédito (`/clientes`):** Control de deudores (fiado), límite de crédito y recepción de abonos.
-7. **Compras y Proveedores (`/compras`):** Órdenes de compra y costo promedio ponderado.
-8. **Reportes y Analítica (`/reportes`):** Ventas netas, utilidad, flujo de caja y exportación a Excel / PDF.
-9. **Tropicalización y Hardware (`/configuracion`):** Temas visuales, logotipo corporativo y formato de impresora térmica.
+## 4. Qué ya no existe
 
----
-
-## 4. Arquitectura de Alta Disponibilidad
-
-- **Soporte Físico:** El usuario está registrado en la base de datos PostgreSQL local (`caja_dev`) mediante `scripts/create-prospect-user.ts`.
-- **Demo Fallback Handler:** En entornos cloud o serverless donde el cluster de base de datos no esté accesible de forma inmediata, `src/server/modules/auth/service.ts`, `src/server/auth/session.ts` y `src/server/authz/resolve.ts` garantizan que las credenciales de demo autentiquen instantáneamente, proporcionando un contexto completo y funcional sin interrumpir la experiencia de navegación del cliente potencial.
+- No hay usuario ni contraseña fijos en el código.
+- No hay token de sesión constante ni contexto de dueño sin base de datos: si la base no responde, el login falla y se ve el error.
+- Se eliminó `scripts/create-prospect-user.ts`.

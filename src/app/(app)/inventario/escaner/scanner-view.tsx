@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useBarcodeScanner } from "@/lib/hardware/use-barcode-scanner";
 import { formatCents } from "@/lib/money";
+import { withBase } from "@/lib/base-path";
 
 interface Warehouse {
   id: string;
@@ -78,7 +79,7 @@ export function InventoryScannerView({
     setUnknownBarcode(null);
 
     try {
-      const res = await fetch(`/api/v1/inventory/quick?q=${encodeURIComponent(term)}&warehouseId=${selectedWarehouseId}`);
+      const res = await fetch(withBase(`/api/v1/inventory/quick?q=${encodeURIComponent(term)}&warehouseId=${selectedWarehouseId}`));
       const data = await res.json();
 
       if (!res.ok) {
@@ -124,7 +125,7 @@ export function InventoryScannerView({
 
     try {
       const priceInCents = newPrice ? Math.round(parseFloat(newPrice) * 100) : undefined;
-      const res = await fetch("/api/v1/inventory/quick", {
+      const res = await fetch(withBase("/api/v1/inventory/quick"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -189,7 +190,7 @@ export function InventoryScannerView({
         return;
       }
 
-      const res = await fetch("/api/v1/inventory/quick", {
+      const res = await fetch(withBase("/api/v1/inventory/quick"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

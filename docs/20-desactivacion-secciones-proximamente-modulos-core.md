@@ -1,5 +1,8 @@
 # Bitácora 20: Desactivación de Secciones con Hover Próximamente y Robustecimiento de Módulos Core
 
+> **Nota de corrección (noviembre 2026):** los *fallbacks defensivos* con datos de ejemplo descritos aquí se retiraron: las pantallas ya no inventan datos ni confirman acciones que no se guardaron. Ver `docs/19-resiliencia-dashboard-fallbacks-demo.md` y `docs/25-demo-segura-y-publicacion-bajo-caja.md`.
+
+
 **Fecha:** 9 de noviembre de 2026  
 **Autor:** Worker: Exkalibur Lead (`exkalibur-lead-worker`)  
 **Tarea EPMS:** `303e3aad-1a61-4963-a155-47202194493d`  

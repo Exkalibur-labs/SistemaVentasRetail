@@ -3,7 +3,7 @@
 import { savePaymentMethod, saveTaxProfile } from "@/server/modules/settings/service";
 import { revalidatePath } from "next/cache";
 import { requireActionContext } from "@/server/context";
-import type { ActionResult } from "@/server/errors";
+import { toActionError, type ActionResult } from "@/server/errors";
 import { checkbox, formToObject } from "@/server/validation";
 import { setCompanyModules, updateCompanySettings } from "@/server/modules/companies/service";
 
@@ -37,10 +37,8 @@ export async function updateSettingsAction(_p: ActionResult<unknown> | null, for
     });
     revalidatePath("/configuracion");
     return { ok: true, data: null };
-  } catch {
-    // Fallback defensivo para demostración serverless
-    revalidatePath("/configuracion");
-    return { ok: true, data: null };
+  } catch (err) {
+    return toActionError(err);
   }
 }
 
@@ -50,9 +48,8 @@ export async function updateModulesAction(_p: ActionResult<unknown> | null, form
     await setCompanyModules(ctx, String(formData.get("companyId")), formData.getAll("modules[]").map(String));
     revalidatePath("/", "layout");
     return { ok: true, data: null };
-  } catch {
-    revalidatePath("/", "layout");
-    return { ok: true, data: null };
+  } catch (err) {
+    return toActionError(err);
   }
 }
 
@@ -66,9 +63,8 @@ export async function savePaymentMethodAction(_p: ActionResult<unknown> | null, 
     await savePaymentMethod(ctx, o.id ? String(o.id) : null, o);
     revalidatePath("/configuracion");
     return { ok: true, data: null };
-  } catch {
-    revalidatePath("/configuracion");
-    return { ok: true, data: null };
+  } catch (err) {
+    return toActionError(err);
   }
 }
 
@@ -79,8 +75,7 @@ export async function saveTaxAction(_p: ActionResult<unknown> | null, formData: 
     const r = await saveTaxProfile(ctx, o.id ? String(o.id) : null, o);
     revalidatePath("/configuracion");
     return { ok: true, data: { productsAffected: r.productsAffected } };
-  } catch {
-    revalidatePath("/configuracion");
-    return { ok: true, data: { productsAffected: 6 } };
+  } catch (err) {
+    return toActionError(err);
   }
 }

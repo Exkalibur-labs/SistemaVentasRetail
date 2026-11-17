@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireActionContext } from "@/server/context";
-import type { ActionResult } from "@/server/errors";
+import { toActionError, type ActionResult } from "@/server/errors";
 import { formToObject } from "@/server/validation";
 import { addCashMovement, closeSession, openSession } from "@/server/modules/cash/service";
 
@@ -14,11 +14,8 @@ export async function openSessionAction(_p: ActionResult<unknown> | null, formDa
   try {
     const ctx = await requireActionContext();
     id = (await openSession(ctx, formToObject(formData))).id;
-  } catch {
-    // Fallback para abrir sesión en demo serverless
-    id = "00000000-0000-0000-0000-000000000010";
-    revalidatePath("/caja");
-    redirect(formData.get("next") === "pos" ? "/pos" : `/caja/${id}`);
+  } catch (err) {
+    return toActionError(err);
   }
   revalidatePath("/caja");
   redirect(formData.get("next") === "pos" ? "/pos" : `/caja/${id}`);
@@ -31,10 +28,8 @@ export async function cashMovementAction(_p: ActionResult<unknown> | null, formD
     await addCashMovement(ctx, { ...o, authorizerUsername: o.authorizerUsername || undefined, authorizerPassword: o.authorizerPassword || undefined });
     revalidatePath(`/caja/${o.cashSessionId}`);
     return { ok: true, data: null };
-  } catch {
-    const o = formToObject(formData);
-    revalidatePath(`/caja/${o.cashSessionId}`);
-    return { ok: true, data: null };
+  } catch (err) {
+    return toActionError(err);
   }
 }
 
@@ -45,9 +40,7 @@ export async function closeSessionAction(input: { cashSessionId: string; denomin
     revalidatePath(`/caja/${input.cashSessionId}`);
     revalidatePath("/caja");
     return { ok: true, data: null };
-  } catch {
-    revalidatePath(`/caja/${input.cashSessionId}`);
-    revalidatePath("/caja");
-    return { ok: true, data: null };
+  } catch (err) {
+    return toActionError(err);
   }
 }

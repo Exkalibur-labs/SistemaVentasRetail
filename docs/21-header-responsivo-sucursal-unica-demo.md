@@ -3,26 +3,26 @@
 **Fecha:** 2026-11-09  
 **Autor:** Exkalibur Lead Worker (`/exkalibur-lead-worker`)  
 **Rama:** `task-146-header-simplificado-sucursal-unica-demo`  
-**Estado:** Implementado y Verificado
+**Estado:** Header implementado y verificado; el contexto de demostración fijo descrito en la sección A se retiró
 
 ---
 
 ## 1. Contexto y Problema Detectado
 
-Durante las pruebas con el usuario prospecto (`@demo_retail` / `demo_session_retail_prospect_2026`), se observaron dos problemas clave en la experiencia de usuario (UX):
+Durante las pruebas con un usuario de demostración, se observaron dos problemas clave en la experiencia de usuario (UX):
 
 1. **Header Confuso y Truncado en Pantallas Delgadas:**
    - En el encabezado se renderizaban dos elementos `<select>` adyacentes: uno para la empresa (`Abarrotes y Mini... ▼`) y otro para la sucursal (`Sucursal Centro ... ▼`).
    - Al tener `disabled={true}` cuando solo existía una opción, lucía como un formulario interactivo roto, carecía de etiqueta o icono indicativo de qué representaba el primer campo y en pantallas de laptop delgada o tablet/móvil colapsaba el texto cortándolo de manera incómoda.
 2. **Multiplicidad Innecesaria de Sucursales en Demo:**
-   - En la resolución de sesión mock demo (`src/server/authz/resolve.ts`), se configuraban dos sucursales (`Sucursal Centro` y `Sucursal Norte`), provocando que la métrica de inicio mostrara `2 activas que puedes ver` y fomentara la presencia de selectores en el header innecesariamente.
+   - En la resolución de sesión de demostración que existía entonces (retirada; ver `docs/25-demo-segura-y-publicacion-bajo-caja.md`), se configuraban dos sucursales (`Sucursal Centro` y `Sucursal Norte`), provocando que la métrica de inicio mostrara `2 activas que puedes ver` y fomentara la presencia de selectores en el header innecesariamente.
 
 ---
 
 ## 2. Decisiones de Ingeniería y Arquitectura
 
 ### A. Limitar Usuario Demo a Sucursal Única (`resolve.ts`)
-- Se removió `Sucursal Norte` del mock del usuario demo (`demo_retail`).
+- Se removió `Sucursal Norte` de ese contexto de demostración (ya no existe; la demo usa la sucursal sembrada «Sucursal Centro»).
 - Ahora `branches` cuenta estrictamente con una sucursal: `Sucursal Centro (Matriz)`.
 - En el dashboard (`HomePage`), la tarjeta de **Sucursales** refleja limpiamente `1 activa que puedes ver`.
 

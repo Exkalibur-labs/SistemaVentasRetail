@@ -13,6 +13,27 @@ export function apiError(status: number, code: string, error: string, fieldError
 }
 
 /**
+ * Hosts desde los que se aceptan mutaciones: el host de la solicitud y, si la app se publica detrás
+ * de otro dominio (p. ej. exkalibur.mx/caja vía rewrite), el host reenviado por la plataforma y el
+ * origen público configurado en APP_PUBLIC_ORIGIN.
+ */
+function allowedHosts(req: NextRequest): Set<string> {
+  const hosts = new Set<string>();
+  const host = req.headers.get("host");
+  if (host) hosts.add(host);
+  const forwarded = req.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  if (forwarded) hosts.add(forwarded);
+  if (process.env.APP_PUBLIC_ORIGIN) {
+    try {
+      hosts.add(new URL(process.env.APP_PUBLIC_ORIGIN).host);
+    } catch {
+      /* valor inválido: se ignora */
+    }
+  }
+  return hosts;
+}
+
+/**
  * Envuelve un handler de la API JSON:
  * - exige sesión válida (cookie httpOnly);
  * - en mutaciones exige el encabezado `x-sc-client` y que el Origin, si viene,
@@ -28,7 +49,7 @@ export function withApi<P = Record<string, string>>(
       if (req.method !== "GET" && req.method !== "HEAD") {
         if (req.headers.get(CLIENT_HEADER) !== "pos") return apiError(403, "forbidden", "Solicitud no permitida.");
         const origin = req.headers.get("origin");
-        if (origin && new URL(origin).host !== req.headers.get("host")) return apiError(403, "forbidden", "Origen no permitido.");
+        if (origin && !allowedHosts(req).has(new URL(origin).host)) return apiError(403, "forbidden", "Origen no permitido.");
       }
       const ctx = await getRequestContext();
       if (!ctx) return apiError(401, "unauthenticated", "Tu sesión expiró. Inicia sesión de nuevo.");

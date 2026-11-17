@@ -1,44 +1,20 @@
-# Bitácora 19: Resiliencia Defensiva en Dashboard y Pantallas Demo Serverless
+# 19. Resiliencia del dashboard: corrección de los datos de respaldo simulados
 
-**Fecha:** 9 de noviembre de 2026  
-**Autor:** Worker: Exkalibur Lead (`exkalibur-lead-worker`)  
-**Tarea EPMS:** `303e3aad-1a61-4963-a155-47202194493d`  
-**Rama:** `task-144-tropicalizacion-hardware-caja-inventario`
+- **Estado:** corregido. La versión original (9 de noviembre de 2026) agregaba bloques `try/catch` que, ante un fallo de la base de datos, mostraban cifras y productos inventados. Ese enfoque se retiró.
 
----
+## 1. Qué había
 
-## 1. Contexto y Problema Detectado
+Para evitar la pantalla de error en una demostración desplegada sin base de datos, varias pantallas y endpoints devolvían datos de ejemplo escritos en el código (ventas del día, catálogo, existencias, cajas, facturas) y confirmaban acciones como cobrar una venta o abrir un turno aunque no se hubieran guardado.
 
-Durante la validación en vivo del usuario demo (`demo_retail` / `Retail2026!`) en el entorno de despliegue en Vercel, al ingresar al Dashboard principal (`/`) o a ciertas vistas del sistema, el Error Boundary de Next.js mostraba la siguiente tarjeta de fallo:
+## 2. Por qué se retiró
 
-> **"Ocurrió un error. Intenta de nuevo. Si persiste, revisa la bitácora o contacta a soporte. Ref. 2035095052"**
+- Un cobro mostrado como exitoso sin registrarse es una venta perdida en un negocio real.
+- Un cierre de caja o un ajuste de inventario «aplicado» sin escribirse descuadra la operación sin que nadie lo note.
+- Las cifras de ejemplo en un sistema con clientes reales pueden confundirse con las propias.
 
-### Causa Raíz
-Los Server Components de Next.js App Router (`src/app/(app)/page.tsx`, `catalogo/page.tsx`, `inventario/page.tsx`, `pos/page.tsx`, `facturacion/page.tsx`) intentaban consultar directamente la base de datos PostgreSQL mediante llamadas a `getSummary()`, `listCompanies()`, `listBranches()`, `listStock()`, etc. En el despliegue serverless de Vercel, al no disponer de una conexión activa a Postgres local (`ECONNREFUSED`), estas promesas eran rechazadas y no eran capturadas a nivel componente, provocando la activación del Error Boundary global.
+## 3. Qué hay ahora
 
----
-
-## 2. Solución Arquitectónica Implementada
-
-Siguiendo el patrón defensivo **Graceful Degradation / Circuit Breaker** de nivel Senior:
-
-1. **Aislamiento por Componente de Servidor (`try / catch`):**
-   - Cada consulta a la base de datos está protegida para que, en caso de interrupción de red o indisponibilidad de la base de datos en demostraciones en vivo, la vista proporcione datos simulados contextualmente enriquecidos para abarrotes y minisúper:
-     - **Dashboard (`/`):** Métricas realistas ($14,850.00 venta neta, 48 tickets, $309.38 promedio, sucursales y bitácora auditada).
-     - **Punto de Venta (`/pos`):** Caja 1 precargada con turno activo listo para vender sin bloquear al cajero.
-     - **Catálogo (`/catalogo`):** Catálogo de abarrotes de alta rotación (Chokis, Coca-Cola 600ml, Alpura 1L, Huevo Calvario 18 pzas, Nutrioli, Sabritas, Jamón FUD) con categorías y opciones.
-     - **Inventario (`/inventario` y `/inventario/escaner`):** Almacén principal y existencias calculadas con semáforo de reorden (OK, Bajo, Agotado).
-     - **Facturación (`/facturacion`):** Facturas emitidas con UUID fiscal y ventas candidatas listas para timbrar.
-
-2. **Cero Violaciones de Tipado y Cero Warnings:**
-   - Tipado estricto con `Awaited<ReturnType<typeof ...>>` y `StockRow`, `ProductListItem`, `RecentSale`.
-   - Se eliminaron todos los `any` explícitos para cumplir estrictamente con `@typescript-eslint/no-explicit-any`.
-   - `npm run typecheck && npm run lint` superados con 0 errores y 0 advertencias.
-   - 105 tests unitarios y de integración verdes (100% pasando).
-
----
-
-## 3. Impacto en Negocio
-
-- **Fiabilidad en Demostraciones a Clientes Potenciales:** Ningún prospecto experimentará pantallas en blanco o mensajes de error técnico. La experiencia de usuario es ininterrumpida y transmite solidez enterprise.
-- **Transparencia en Hardware y Tropicalización:** Los módulos de escaneo Znemaz y tickets térmicos 58mm operan tanto con backend conectado como en modo de demostración.
+- Las consultas fallan de forma visible: las pantallas muestran el error o un aviso para reintentar, y las acciones no confirman si no se guardaron.
+- El POS usa la copia local ya descargada (IndexedDB) y, si no existe, muestra «No se pudo cargar el catálogo» con botón Reintentar.
+- La demo se resuelve con una base de datos propia con datos de ejemplo reales (ver `docs/18-usuario-demo-prospectos.md`), no con datos escritos en el código.
+- La facturación sigue siendo una simulación, ahora declarada en la pantalla y en el XML.
