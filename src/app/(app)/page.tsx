@@ -20,13 +20,38 @@ export default async function HomePage() {
   const canUsers = hasPermission(ctx, "users.view");
   const canAudit = hasPermission(ctx, "audit.view");
   const canReports = hasPermission(ctx, "reports.view") && !!ctx.company;
-  const today = canReports ? await getSummary(reportFilter(ctx, { periodo: "hoy" })) : null;
+  const today = canReports
+    ? await getSummary(reportFilter(ctx, { periodo: "hoy" })).catch((err) => {
+        console.error("[home.today]", err);
+        return null;
+      })
+    : null;
 
   const [companies, branches, users, audit] = await Promise.all([
-    canCompanies ? listCompanies(ctx) : [],
-    canBranches && ctx.company ? listBranches(ctx) : [],
-    canUsers && ctx.company ? listUsers(ctx) : [],
-    canAudit ? queryAudit({ tenantId: ctx.tenantId, companyId: ctx.company?.id, limit: 8 }) : { items: [], hasMore: false },
+    canCompanies
+      ? listCompanies(ctx).catch((err) => {
+          console.error("[home.companies]", err);
+          return [];
+        })
+      : [],
+    canBranches && ctx.company
+      ? listBranches(ctx).catch((err) => {
+          console.error("[home.branches]", err);
+          return [];
+        })
+      : [],
+    canUsers && ctx.company
+      ? listUsers(ctx).catch((err) => {
+          console.error("[home.users]", err);
+          return [];
+        })
+      : [],
+    canAudit
+      ? queryAudit({ tenantId: ctx.tenantId, companyId: ctx.company?.id, limit: 8 }).catch((err) => {
+          console.error("[home.audit]", err);
+          return { items: [], hasMore: false };
+        })
+      : { items: [], hasMore: false },
   ]);
 
   const modules = [...ctx.enabledModules].map((m) => AREA_LABELS[m]);

@@ -1,8 +1,32 @@
+import { z } from "zod";
 import { withApi } from "@/server/api";
 import { quickAddStock, quickCreateProductWithStock, quickScanLookup } from "@/server/modules/inventory/quick-service";
 import { ValidationError } from "@/server/errors";
+import { parseOrThrow } from "@/server/validation";
 
 export const dynamic = "force-dynamic";
+
+const quickInventoryBodySchema = z.discriminatedUnion("action", [
+  z.object({
+    action: z.literal("add_stock"),
+    variantId: z.string().min(1, "variantId es requerido."),
+    warehouseId: z.string().min(1, "warehouseId es requerido."),
+    quantity: z.coerce.number().finite().positive("La cantidad debe ser mayor a cero."),
+    unitPrice: z.coerce.number().finite().nonnegative().nullable().optional(),
+    unitCost: z.coerce.number().finite().nonnegative().nullable().optional(),
+    reason: z.string().max(240).optional(),
+  }),
+  z.object({
+    action: z.literal("create_product"),
+    barcode: z.string().trim().min(1, "El código de barras es requerido."),
+    name: z.string().trim().min(1, "El nombre del producto es requerido."),
+    price: z.coerce.number().finite().positive("El precio debe ser mayor a cero."),
+    quantity: z.coerce.number().finite().nonnegative().optional().default(0),
+    cost: z.coerce.number().finite().nonnegative().nullable().optional(),
+    categoryName: z.string().max(120).optional(),
+    warehouseId: z.string().min(1).optional(),
+  }),
+]);
 
 /** Búsqueda rápida por código de barras o SKU */
 export const GET = withApi(async (req, ctx) => {
@@ -20,33 +44,28 @@ export const GET = withApi(async (req, ctx) => {
 
 /** Entrada rápida de stock o alta rápida de producto escaneado */
 export const POST = withApi(async (req, ctx) => {
-  const body = await req.json();
-  const { action } = body;
+  const input = parseOrThrow(quickInventoryBodySchema, await req.json());
 
-  if (action === "add_stock") {
+  if (input.action === "add_stock") {
     const res = await quickAddStock(ctx, {
-      variantId: body.variantId,
-      warehouseId: body.warehouseId,
-      quantity: Number(body.quantity),
-      unitPrice: body.unitPrice !== undefined && body.unitPrice !== null ? Number(body.unitPrice) : undefined,
-      unitCost: body.unitCost !== undefined && body.unitCost !== null ? Number(body.unitCost) : undefined,
-      reason: body.reason,
+      variantId: input.variantId,
+      warehouseId: input.warehouseId,
+      quantity: input.quantity,
+      unitPrice: input.unitPrice ?? undefined,
+      unitCost: input.unitCost ?? undefined,
+      reason: input.reason,
     });
     return { ok: true, ...res };
   }
 
-  if (action === "create_product") {
-    const res = await quickCreateProductWithStock(ctx, {
-      barcode: body.barcode,
-      name: body.name,
-      price: Number(body.price),
-      quantity: body.quantity !== undefined ? Number(body.quantity) : 0,
-      cost: body.cost !== undefined && body.cost !== null ? Number(body.cost) : null,
-      categoryName: body.categoryName,
-      warehouseId: body.warehouseId,
-    });
-    return { ok: true, ...res };
-  }
-
-  throw new ValidationError({ action: ["Acción no válida. Se esperaba 'add_stock' o 'create_product'."] });
+  const res = await quickCreateProductWithStock(ctx, {
+    barcode: input.barcode,
+    name: input.name,
+    price: input.price,
+    quantity: input.quantity,
+    cost: input.cost ?? null,
+    categoryName: input.categoryName,
+    warehouseId: input.warehouseId,
+  });
+  return { ok: true, ...res };
 });
