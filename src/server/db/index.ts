@@ -1,14 +1,18 @@
-import { drizzle } from "drizzle-orm/node-postgres";
+import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from "./schema";
 
 /**
- * Cliente de base de datos. En desarrollo se reutiliza el pool entre
- * recargas de Next.js para no agotar conexiones.
+ * Cliente de base de datos con inicialización perezosa para no fallar durante `next build`
+ * cuando `DATABASE_URL` no está presente en tiempo de compilación.
+ * En desarrollo se reutiliza el pool entre recargas de Next.js.
  */
-const globalForDb = globalThis as unknown as { __pgPool?: Pool };
+const globalForDb = globalThis as unknown as {
+  __pgPool?: Pool;
+  __drizzleDb?: NodePgDatabase<typeof schema>;
+};
 
-function createPool() {
+function createPool(): Pool {
   const url = process.env.DATABASE_URL;
   if (!url) {
     throw new Error(
@@ -25,11 +29,33 @@ function createPool() {
   });
 }
 
-export const pool = globalForDb.__pgPool ?? createPool();
-if (process.env.NODE_ENV !== "production") globalForDb.__pgPool = pool;
+export function getPool(): Pool {
+  if (!globalForDb.__pgPool) {
+    globalForDb.__pgPool = createPool();
+  }
+  return globalForDb.__pgPool;
+}
 
-export const db = drizzle(pool, { schema });
-export type Db = typeof db;
+export function getDb(): NodePgDatabase<typeof schema> {
+  if (!globalForDb.__drizzleDb) {
+    globalForDb.__drizzleDb = drizzle(getPool(), { schema });
+  }
+  return globalForDb.__drizzleDb;
+}
+
+function lazyProxy<T extends object>(resolve: () => T): T {
+  return new Proxy({} as T, {
+    get(_target, prop) {
+      const instance = resolve();
+      const value = Reflect.get(instance, prop, instance);
+      return typeof value === "function" ? value.bind(instance) : value;
+    },
+  });
+}
+
+export const pool: Pool = lazyProxy(getPool);
+export const db: NodePgDatabase<typeof schema> = lazyProxy(getDb);
+export type Db = NodePgDatabase<typeof schema>;
 /** Tipo de la transacción (mismo API que db). */
 export type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
 export type DbOrTx = Db | Tx;

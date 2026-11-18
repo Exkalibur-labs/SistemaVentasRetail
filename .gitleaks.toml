@@ -1,0 +1,9 @@
+title = "SistemaVentasRetail Gitleaks Config"
+
+[allowlist]
+description = "Permitir mocks de pruebas y lockfiles"
+paths = [
+  '''tests/.*''',
+  '''src/.*\.test\.(ts|js|tsx|jsx)''',
+  '''package-lock\.json''',
+]

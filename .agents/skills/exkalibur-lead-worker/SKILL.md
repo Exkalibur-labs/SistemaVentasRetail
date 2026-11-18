@@ -68,7 +68,7 @@ Todo ciclo de vida de una tarea asignada en Exkalibur debe ser reportado en tiem
 
 Antes de realizar el commit y abrir el PR, el código debe aprobar las 5 disciplinas:
 
-1. 🌟 **Staff Principal Engineer:** Modularidad, bajo acoplamiento, cero IDs o credenciales quemadas (**Zero-Hardcoding**). Adopción estricta de la taxonomía canónica de 3 capas.
+1. 🌟 **Staff Principal Engineer & Anti-Slop Gate:** Modularidad, bajo acoplamiento, cero IDs o credenciales quemadas (**Zero-Hardcoding**). Adopción estricta de la skill **`anti-slop`** (`.agents/skills/anti-slop/SKILL.md`): prohibido `as any` / `as unknown as`, `catch {}` vacíos, abstracciones de un solo llamador, comentarios redundantes que narran lo obvio, `console.log` residuales o *scope creep* en el `git diff`.
 2. ⚡ **SRE Lead:** 
    - **Regla de Oro Anti-Crash en Server Components (Next.js App Router):** *PROHIBIDO hacer consultas Drizzle/SQL o fetches "desnudos" sin bloque `.catch()`*. Todo Server Component debe tener un fallback defensivo para renderizar un estado limpio si la base de datos no responde.
    - Colocar `error.tsx` granulares en los segmentos de ruta para aislar fallos.
@@ -104,6 +104,13 @@ Para erradicar errores de integración y pantallas rotas después de fusionar PR
 
 - Al introducir un nuevo patrón arquitectónico, resolver una deuda técnica o crear un módulo nuevo, el agente **está obligado a actualizar el SKILL del proyecto** (ej. `coneja-taproom-core`, `sistema-ventas-retail`) y mantener sincronizada la copia de respaldo en `.agents/skills/` del workspace raíz.
 - Escribir siempre la justificación técnica de negocio en la bitácora del proyecto (`<repo>/docs/`).
+
+### 📖 Guías de Referencia On-Demand (`references/`)
+Para no saturar el presupuesto de contexto global, consulta estos playbooks internos en `/Users/jose.ortiz/Documents/Exkalibur/.agents/skills/exkalibur-lead-worker/references/` según el tipo de tarea:
+1. [`devsecops-ci-guardrails.md`](references/devsecops-ci-guardrails.md) — Pipelines GitHub Actions, `.gitleaks.toml`, bindings Linux (`rolldown`/`oxide`) y bootstrap `postgres:16` para RLS.
+2. [`nextjs-build-and-supabase-safety.md`](references/nextjs-build-and-supabase-safety.md) — Lazy-init de secretos en `next build`, `.maybeSingle()`, `force-dynamic`, RLS estricto y limpieza de `.turbo`.
+3. [`react-tailwind-ui-standards.md`](references/react-tailwind-ui-standards.md) — Frontera Server/Client Components, clases estáticas Tailwind, accesibilidad, `useTransition` y UX sin *AI slop*.
+4. [`api-webhooks-and-ai-guardrails.md`](references/api-webhooks-and-ai-guardrails.md) — Firmas HMAC (`timingSafeEqual`), Zod en rutas públicas, idempotencia, timeouts LLM y fallbacks deterministas.
 
 ---
 
